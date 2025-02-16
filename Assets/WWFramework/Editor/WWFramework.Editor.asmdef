@@ -1,0 +1,4 @@
+{
+	"name": "WWFramework.Editor",
+	"references":[ "WWFramework.Runtime" ]
+}

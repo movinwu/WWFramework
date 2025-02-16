@@ -1,0 +1,15 @@
+/*------------------------------
+ * 脚本名称: #SCRIPTNAME#
+ * 创建者: movin
+ * 创建日期: #CREATIONDATE#
+------------------------------*/
+
+using UnityEngine;
+
+/// <summary>
+/// 
+/// </summary>
+public class #SCRIPTNAME#
+{
+    
+}
