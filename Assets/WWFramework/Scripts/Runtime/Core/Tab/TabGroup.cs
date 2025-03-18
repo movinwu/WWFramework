@@ -59,14 +59,31 @@ namespace WWFramework
         {
             if (null == tabs || tabs.Count == 0)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(Init)}:{nameof(tabs)}为空");
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine(nameof(TabGroup));
+                    sb.Append(':');
+                    sb.Append(nameof(Init));
+                    sb.Append(':');
+                    sb.Append(nameof(tabs));
+                    sb.Append("为空");
+                });
                 return;
             }
 
             var newIndex = Mathf.Clamp(initIndex, 0, tabs.Count - 1);
             if (newIndex != initIndex)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(Init)}:{nameof(initIndex)}超出范围,已修正为:{newIndex}");
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine(nameof(TabGroup));
+                    sb.Append(':');
+                    sb.Append(nameof(Init));
+                    sb.Append(':');
+                    sb.Append(nameof(initIndex));
+                    sb.Append("超出范围,已修正为:");
+                    sb.AppendLine(initIndex.ToString());
+                });
             }
 
             _newTabs = tabs;
@@ -82,12 +99,28 @@ namespace WWFramework
         {
             if (null == _tabs || _tabs.Count == 0)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(SwitchTab)}:{nameof(_tabs)}为空");
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine(nameof(TabGroup));
+                    sb.Append(':');
+                    sb.Append(nameof(SwitchTab));
+                    sb.Append(':');
+                    sb.Append(nameof(_tabs));
+                    sb.Append("为空");
+                });
                 return;
             }
             if (index < 0 || index >= _tabs.Count)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(SwitchTab)}:{nameof(index)}超出范围");
+                Log.LogWarning(sb =>
+                    {
+                        sb.AppendLine(nameof(TabGroup));
+                        sb.Append(':');
+                        sb.Append(nameof(SwitchTab));
+                        sb.Append(':');
+                        sb.Append(nameof(index));
+                        sb.Append("超出范围");
+                    });
                 return;
             }
             _newIndex = index;
@@ -102,13 +135,29 @@ namespace WWFramework
         {
             if (null == rebuildAction)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(ReBuildTabs)}:{nameof(rebuildAction)}为空");
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine(nameof(TabGroup));
+                    sb.Append(':');
+                    sb.Append(nameof(ReBuildTabs));
+                    sb.Append(':');
+                    sb.Append(nameof(rebuildAction));
+                    sb.Append("为空");
+                });
                 return;
             }
 
             if (null == _tabs)
             {
-                Debug.LogWarning($"{nameof(TabGroup)}:{nameof(ReBuildTabs)}:{nameof(_tabs)}为空");
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine(nameof(TabGroup));
+                    sb.Append(':');
+                    sb.Append(nameof(ReBuildTabs));
+                    sb.Append(':');
+                    sb.Append(nameof(_tabs));
+                    sb.Append("为空");
+                });
                 return;
             }
             

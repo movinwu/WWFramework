@@ -7,9 +7,9 @@
 namespace WWFramework
 {
     /// <summary>
-    /// 全局优先级定义
+    /// 全局编辑器优先级定义
     /// </summary>
-    public class GlobalPriorityDefine
+    public class GlobalEditorPriorityDefine
     {
         /// <summary>
         /// 通用脚本模板
@@ -20,5 +20,10 @@ namespace WWFramework
         /// WWFramework脚本模板
         /// </summary>
         public const int WWFrameworkScriptTemplate = 2;
+
+        /// <summary>
+        /// 全局游戏配置
+        /// </summary>
+        public const int GlobalGameConfig = 3;
     }
 }

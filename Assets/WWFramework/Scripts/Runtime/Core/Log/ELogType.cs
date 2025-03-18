@@ -9,8 +9,27 @@ namespace WWFramework
     /// <summary>
     /// 日志类型枚举
     /// </summary>
-    public class ELogType
+    [System.Flags]
+    public enum ELogType
     {
+        /// <summary>
+        /// 通用日志
+        /// </summary>
+        Common = 1 << 0,
         
+        /// <summary>
+        /// 资源日志
+        /// </summary>
+        Resource = 1 << 1,
+        
+        /// <summary>
+        /// 配置日志
+        /// </summary>
+        Config = 1 << 2,
+        
+        /// <summary>
+        /// 数据表日志
+        /// </summary>
+        DataTable = 1 << 3,
     }
 }

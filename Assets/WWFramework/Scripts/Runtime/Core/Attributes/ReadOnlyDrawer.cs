@@ -4,6 +4,7 @@
  * 创建日期: 2025/03/02
 ------------------------------*/
 
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -24,3 +25,4 @@ namespace WWFramework
         }
     }
 }
+#endif

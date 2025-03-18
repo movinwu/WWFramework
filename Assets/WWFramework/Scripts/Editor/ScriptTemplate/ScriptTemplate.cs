@@ -13,7 +13,7 @@ namespace WWFramework
     /// </summary>
     public class ScriptTemplate
     {
-        [MenuItem(GlobalPathDefine.CommonScriptTemplate, false, GlobalPriorityDefine.CommonScriptTemplate)]
+        [MenuItem(GlobalEditorStringDefine.CommonScriptTemplate, false, GlobalEditorPriorityDefine.CommonScriptTemplate)]
         private static void CreateCommonScript()
         {
             // 调用 Unity 的内置方法创建脚本
@@ -22,7 +22,7 @@ namespace WWFramework
                 "NewCommonScript.cs");
         }
     
-        [MenuItem(GlobalPathDefine.WWFrameworkScriptTemplate, false, GlobalPriorityDefine.WWFrameworkScriptTemplate)]
+        [MenuItem(GlobalEditorStringDefine.WWFrameworkScriptTemplate, false, GlobalEditorPriorityDefine.WWFrameworkScriptTemplate)]
         private static void CreateWWFrameworkScript()
         {
             // 调用 Unity 的内置方法创建脚本
