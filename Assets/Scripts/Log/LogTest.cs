@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using WWFramework;
 
@@ -9,22 +7,24 @@ public class LogTest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Log.Debug(sb =>
+        Log.StartTimeMonitor();
+        Log.LogDebug(sb =>
         {
             sb.AppendLine("Debug");
         });
-        Log.Debug(sb =>
+        Log.LogDebug(sb =>
         {
             sb.AppendLine("Debug");
         }, ELogType.Config);
-        Log.Debug(sb =>
+        Log.LogDebug(sb =>
         {
             sb.AppendLine("Debug");
         }, ELogType.Resource);
-        Log.Debug(sb =>
+        Log.LogDebug(sb =>
         {
             sb.AppendLine("Debug");
         }, ELogType.DataTable);
+        Log.EndTimeMonitor();
     }
 
     // Update is called once per frame
