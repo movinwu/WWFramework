@@ -288,12 +288,7 @@ namespace WWFramework
         /// <summary>
         /// 时间运行监控(UnityRealTime监控)
         /// </summary>
-        private static float UnityRealTimeCache = 0f;
-        
-        /// <summary>
-        /// 当前监控类型
-        /// </summary>
-        private static EMonitorType MonitorType = EMonitorType.System;
+        private static float _unityRealTimeCache = 0f;
         
         /// <summary>
         /// 启动时间监控
@@ -307,7 +302,7 @@ namespace WWFramework
                     Stopwatch.Restart();
                     break;
                 case EMonitorType.UnityRealTime:
-                    UnityRealTimeCache = Time.realtimeSinceStartup;
+                    _unityRealTimeCache = Time.realtimeSinceStartup;
                     break;
             }
         }
@@ -352,7 +347,7 @@ namespace WWFramework
                     }
                     break;
                 case EMonitorType.UnityRealTime:
-                    var realTime = Time.realtimeSinceStartup - UnityRealTimeCache;
+                    var realTime = Time.realtimeSinceStartup - _unityRealTimeCache;
 
                     void RealTimeLogBuild(StringBuilder logBuild)
                     {

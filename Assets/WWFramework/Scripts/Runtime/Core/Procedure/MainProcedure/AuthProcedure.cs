@@ -4,6 +4,7 @@
  * 创建日期: 2025/03/19
 ------------------------------*/
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace WWFramework
@@ -14,6 +15,21 @@ namespace WWFramework
     /// </summary>
     public class AuthProcedure : ProcedureBase
     {
-        
+        public override (float current, float total) Progress => (count, total);
+
+        private int count = 0;
+        private int total = 5;
+
+        protected override async UniTask DoExecute()
+        {
+            count = 0;
+
+            while (count < total)
+            {
+                await UniTask.Delay(3000, DelayType.DeltaTime);
+                count++;
+            }
+            await base.DoExecute();
+        }
     }
 }

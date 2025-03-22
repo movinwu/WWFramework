@@ -4,6 +4,7 @@
  * 创建日期: 2025/03/19
 ------------------------------*/
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace WWFramework
@@ -16,6 +17,10 @@ namespace WWFramework
     /// </summary>
     public class HotfixProcedure : ProcedureBase
     {
-        
+        protected override UniTask DoExecute()
+        {
+            GameEntry.MainProcedure.GUIProcedures.Add(new HotfixProcedure());
+            return base.DoExecute();
+        }
     }
 }

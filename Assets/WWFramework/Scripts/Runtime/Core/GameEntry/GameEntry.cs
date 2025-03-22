@@ -25,7 +25,7 @@ namespace WWFramework
         /// <summary>
         /// 流程模块
         /// </summary>
-        public static MainProcedureModule mainProcedure;
+        public static MainProcedureModule MainProcedure { get; private set; }
 
         #endregion 主包中各模块生声明
 
@@ -35,18 +35,17 @@ namespace WWFramework
             Log.Init(globalGameConfig.EnableLogType, globalGameConfig.EnableLogDebug, globalGameConfig.EnableLogWarning, globalGameConfig.EnableLogError);
             
             // 初始化各个模块
-            mainProcedure = AddModule<MainProcedureModule>();
-            mainProcedure.OnInit();
+            MainProcedure = AddModule<MainProcedureModule>();
             
             // 模块初始化完成,开始执行主流程
-            mainProcedure.StartMainProcedure().Forget();
+            MainProcedure.StartMainProcedure().Forget();
         }
         
         private void OnDestroy()
         {
             // 释放各个模块并置空
-            mainProcedure.OnRelease();
-            mainProcedure = null;
+            MainProcedure.OnRelease();
+            MainProcedure = null;
         }
 
         /// <summary>
@@ -61,12 +60,16 @@ namespace WWFramework
             {
                 var obj = new GameObject(typeof(T).Name);
                 obj.transform.SetParent(transform);
-                return obj.AddComponent(typeof(T)) as T;
+                var module = obj.AddComponent(typeof(T)) as T;
+                module.OnInit();
+                return module;
             }
             // 对于C#对象模块,反射创建对象
             else
             {
-                return Activator.CreateInstance(typeof(T)) as T;
+                var module = Activator.CreateInstance(typeof(T)) as T;
+                module.OnInit();
+                return module;
             }
         }
     }

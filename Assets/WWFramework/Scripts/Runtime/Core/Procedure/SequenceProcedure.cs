@@ -15,20 +15,23 @@ namespace WWFramework
     /// </summary>
     public sealed class SequenceProcedure : ProcedureBase
     {
-        private readonly List<ProcedureBase> _procedures = new List<ProcedureBase>();
+        /// <summary>
+        /// 所有等待顺序执行的流程
+        /// </summary>
+        public List<ProcedureBase> Procedures { get; private set; } = new List<ProcedureBase>();
 
-        public override (float progress, float total) Progress
+        public override (float current, float total) Progress
         {
             get
             {
-                return (_procedures.WhereArray(x => x.IsFinished).Length, _procedures.Count);
+                return (Procedures.WhereArray(x => x.IsFinished).Length, Procedures.Count);
             }
         }
         
         /// <summary>
         /// 当前正在执行的流程
         /// </summary>
-        public ProcedureBase CurrentExecutingProcedure => _procedures.First(x => !x.IsFinished);
+        public ProcedureBase CurrentExecutingProcedure => Procedures.First(x => !x.IsFinished);
 
         /// <summary>
         /// 添加流程
@@ -36,12 +39,12 @@ namespace WWFramework
         /// <param name="procedure"></param>
         public void AddProcedure(ProcedureBase procedure)
         {
-            _procedures.Add(procedure);
+            Procedures.Add(procedure);
         }
 
         protected override async UniTask DoExecute()
         {
-            foreach (var procedure in _procedures)
+            foreach (var procedure in Procedures)
             {
                 await procedure.Execute();
             }

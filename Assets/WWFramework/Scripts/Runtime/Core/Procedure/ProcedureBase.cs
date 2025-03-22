@@ -22,7 +22,7 @@ namespace WWFramework
         /// <summary>
         /// 进度
         /// </summary>
-        public virtual (float progress, float total) Progress => IsFinished ? (1, 1) : (0, 1);
+        public virtual (float current, float total) Progress => IsFinished ? (1, 1) : (0, 1);
 
         /// <summary>
         /// 执行

@@ -14,9 +14,12 @@ namespace WWFramework
     /// </summary>
     public sealed class ParallelProcedure : ProcedureBase
     {
-        private readonly List<ProcedureBase> _procedures = new List<ProcedureBase>();
+        /// <summary>
+        /// 所有并行的流程
+        /// </summary>
+        public List<ProcedureBase> Procedures { get; private set; } = new List<ProcedureBase>();
 
-        public override (float progress, float total) Progress => (_procedures.WhereArray(x => x.IsFinished).Length, _procedures.Count);
+        public override (float current, float total) Progress => (Procedures.WhereArray(x => x.IsFinished).Length, Procedures.Count);
 
         /// <summary>
         /// 添加流程
@@ -24,12 +27,12 @@ namespace WWFramework
         /// <param name="procedure"></param>
         public void AddProcedure(ProcedureBase procedure)
         {
-            _procedures.Add(procedure);
+            Procedures.Add(procedure);
         }
 
         protected override async UniTask DoExecute()
         {
-            await UniTask.WhenAll(_procedures.SelectArray(x => x.Execute()));
+            await UniTask.WhenAll(Procedures.SelectArray(x => x.Execute()));
         }
     }
 }
