@@ -140,8 +140,8 @@ namespace WWFramework
         public static string UlongsToIpv6(ulong high, ulong low)
         {
             byte[] ipBytes = new byte[16];
-            Buffer.BlockCopy(BitConverter.GetBytes(high), 0, ipBytes, 0, 8);
-            Buffer.BlockCopy(BitConverter.GetBytes(low), 0, ipBytes, 8, 8);
+            System.Buffer.BlockCopy(BitConverter.GetBytes(high), 0, ipBytes, 0, 8);
+            System.Buffer.BlockCopy(BitConverter.GetBytes(low), 0, ipBytes, 8, 8);
             return new IPAddress(ipBytes).ToString();
         }
     }

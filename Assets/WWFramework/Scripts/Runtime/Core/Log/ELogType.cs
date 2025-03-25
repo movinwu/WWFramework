@@ -31,5 +31,10 @@ namespace WWFramework
         /// 数据表日志
         /// </summary>
         DataTable = 1 << 3,
+        
+        /// <summary>
+        /// 网络日志
+        /// </summary>
+        Network = 1 << 4,
     }
 }
