@@ -299,7 +299,7 @@ namespace WWFramework
             {
                 if (result[i])
                 {
-                    resultArray[resultArray.Length - count] = source[i];
+                    resultArray[^count] = source[i];
                     count--;
                 }
             }

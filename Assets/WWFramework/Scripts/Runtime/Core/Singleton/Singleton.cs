@@ -14,7 +14,7 @@ namespace WWFramework
     /// 普通单例基类
     /// </summary>
     /// <typeparam name="T">单例类型</typeparam>
-    public class Singleton<T> where T : class, new()
+    public class Singleton<T> where T : class
     {
         private static T _instance;
         private static readonly object _lock = new object();
@@ -33,35 +33,13 @@ namespace WWFramework
                         if (_instance == null)
                         {
                             var constructors =
-                                typeof(T).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance);
-                            var parameterlessCtors = constructors.Where(c => c.GetParameters().Length == 0).ToList();
+                                typeof(T).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance)
+                                    .WhereArray(c => c.GetParameters().Length == 0);
 
-                            // 检查是否存在其他构造函数
-                            if (constructors.Length > parameterlessCtors.Count)
+                            if (constructors.Length == 1)
                             {
-                                Log.LogWarning(sb =>
-                                {
-                                    sb.Append("[Singleton] ");
-                                    sb.Append(typeof(T).Name);
-                                    sb.Append(
-                                        " has multiple constructors, only parameterless private constructor will be used");
-                                });
+                                _instance = (T)constructors[0].Invoke(null);
                             }
-
-                            // 检查无参构造函数
-                            if (parameterlessCtors.Count == 0)
-                            {
-                                throw new InvalidOperationException(
-                                    $"[Singleton] {typeof(T)} must have a private parameterless constructor");
-                            }
-
-                            if (parameterlessCtors.Count > 1)
-                            {
-                                throw new InvalidOperationException(
-                                    $"[Singleton] {typeof(T)} has multiple parameterless constructors");
-                            }
-
-                            _instance = (T)parameterlessCtors[0].Invoke(null);
                         }
                     }
                 }
