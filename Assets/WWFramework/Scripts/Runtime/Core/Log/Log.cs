@@ -35,14 +35,13 @@ namespace WWFramework
         /// <summary>
         /// 初始化日志
         /// </summary>
-        /// <param name="enableLogType">允许的日志类型</param>
-        /// <param name="enableDebug">是否允许debug日志</param>
-        /// <param name="enableWarning">是否允许warning日志</param>
-        /// <param name="enableError">是否允许error日志</param>
-        public static void Init(ELogType enableLogType, bool enableDebug, bool enableWarning, bool enableError)
+        public static void Init()
         {
-            _enableLogType = enableLogType;
-            _logLevel = (enableDebug, enableWarning, enableError);
+            _enableLogType = GameEntry.GlobalGameConfig.enableLogType;
+            _logLevel = (
+                GameEntry.GlobalGameConfig.enableLogDebug, 
+                GameEntry.GlobalGameConfig.enableLogWarning, 
+                GameEntry.GlobalGameConfig.enableLogError);
         }
         
         /// <summary>

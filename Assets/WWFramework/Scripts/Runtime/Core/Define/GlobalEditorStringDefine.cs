@@ -30,5 +30,15 @@ namespace WWFramework
         /// 全局游戏配置名称
         /// </summary>
         public const string GlobalGameConfigName = "GlobalGameConfig";
+        
+        /// <summary>
+        /// 网络配置路径
+        /// </summary>
+        public const string NetworkConfig = "ScriptableObject/NetworkConfig";
+        
+        /// <summary>
+        /// 网络配置名称
+        /// </summary>
+        public const string NetworkConfigName = "NetworkConfig";
     }
 }

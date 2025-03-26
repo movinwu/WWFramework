@@ -17,8 +17,10 @@ namespace WWFramework
     /// </summary>
     public partial class GameEntry : MonoBehaviour
     {
-        [Header("全局游戏配置")]
-        public GameConfig globalGameConfig;
+        [Header("全局游戏配置"), SerializeField]
+        private GameConfig globalGameConfig;
+
+        public static GameConfig GlobalGameConfig { get; private set; }
 
         #region 主包中各模块声明
 
@@ -26,16 +28,24 @@ namespace WWFramework
         /// 流程模块
         /// </summary>
         public static MainProcedureModule MainProcedure { get; private set; }
+        
+        /// <summary>
+        /// 网络模块
+        /// </summary>
+        public static NetworkClientModule NetworkClient { get; private set; }
 
         #endregion 主包中各模块生声明
 
         private void Awake()
         {
+            // 赋值全局游戏配置
+            GlobalGameConfig = globalGameConfig;
             // 初始化日志
-            Log.Init(globalGameConfig.EnableLogType, globalGameConfig.EnableLogDebug, globalGameConfig.EnableLogWarning, globalGameConfig.EnableLogError);
+            Log.Init();
             
             // 初始化各个模块
             MainProcedure = AddModule<MainProcedureModule>();
+            NetworkClient = AddModule<NetworkClientModule>();
             
             // 模块初始化完成,开始执行主流程
             MainProcedure.StartMainProcedure().Forget();

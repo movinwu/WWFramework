@@ -25,5 +25,10 @@ namespace WWFramework
         /// 全局游戏配置
         /// </summary>
         public const int GlobalGameConfig = 3;
+
+        /// <summary>
+        /// 网络配置
+        /// </summary>
+        public const int NetworkConfig = 4;
     }
 }

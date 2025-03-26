@@ -5,6 +5,7 @@
 ------------------------------*/
 
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace WWFramework
 {
@@ -15,11 +16,14 @@ namespace WWFramework
     public class GameConfig : ScriptableObject
     {
         [Header("允许打印的日志类型")]
-        public ELogType EnableLogType = ELogType.Common;
+        public ELogType enableLogType = ELogType.Common;
 
         [Header("允许打印的日志级别(debug, warning, error)")]
-        public bool EnableLogDebug = true;
-        public bool EnableLogWarning = true;
-        public bool EnableLogError = true;
+        public bool enableLogDebug = true;
+        public bool enableLogWarning = true;
+        public bool enableLogError = true;
+        
+        [Header("网络配置")]
+        public NetworkConfig networkConfig;
     }
 }
