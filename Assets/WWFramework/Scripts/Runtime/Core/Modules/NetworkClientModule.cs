@@ -15,11 +15,40 @@ namespace WWFramework
     /// </summary>
     public class NetworkClientModule : IGameModule
     {
-#if NETCORE_TCP
         /// <summary>
-        /// tcp客户端
+        /// 客户端适配器
         /// </summary>
-        private TcpClient _tcpClient;
+        private IClientAdapter _clientAdapter;
+
+        /// <summary>
+        /// 重连开始回调
+        /// </summary>
+        public System.Action OnReconnectStart;
+        
+        /// <summary>
+        /// 重连成功回调
+        /// </summary>
+        public System.Action OnReconnectSuccess;
+        
+        /// <summary>
+        /// 重连失败回调
+        /// </summary>
+        public System.Action<int> OnReconnectFail;
+        
+        /// <summary>
+        /// 连接成功回调
+        /// </summary>
+        public System.Action OnConnectedSuccess;
+
+        /// <summary>
+        /// 连接失败回调
+        /// </summary>
+        public System.Action OnConnectedFailed;
+
+        /// <summary>
+        /// 断开连接回调
+        /// </summary>
+        public System.Action OnDisconnected;
         
         public UniTask OnInit()
         {
@@ -33,60 +62,100 @@ namespace WWFramework
         /// <summary>
         /// 异步发起连接
         /// </summary>
-        /// <param name="address">服务器地址</param>
-        /// <param name="port">服务器端口</param>
-        public async UniTask ConnectAsync(string address, int port)
+        public async UniTask Connect()
         {
-            _tcpClient ??= new TcpClient(
-                GameEntry.GlobalGameConfig.networkConfig.gameAddress,
-                GameEntry.GlobalGameConfig.networkConfig.gamePort);
-            
-            _tcpClient = new TcpClient(address, port);
-            if (_tcpClient.ConnectAsync())
+            if (null == _clientAdapter)
             {
-                var connectTask = UniTask.WaitUntil(() => _tcpClient.IsConnected);
-                var timeoutTask = UniTask.Delay(5000);
-                await UniTask.WhenAny(connectTask, timeoutTask);
-                if (_tcpClient.IsConnected)
-                {
-                    Log.LogDebug(sb =>
-                    {
-                        sb.Append("网络连接成功");
-                    }, ELogType.Network);
-                }
-                else
-                {
-                    Log.LogError(sb =>
-                    {
-                        sb.Append("网络连接超时");
-                    }, ELogType.Network);
-                    // 确保断开连接
-                    if (_tcpClient.DisconnectAsync())
-                    {
-                        await UniTask.WaitUntil(() => !_tcpClient.IsConnected && !_tcpClient.IsConnecting);
-                    }
-                }
+#if NETCORE_TCP
+                _clientAdapter = new TcpClientAdapter(
+                    GameEntry.GlobalGameConfig.networkConfig.gameAddress,
+                    GameEntry.GlobalGameConfig.networkConfig.gamePort);
+#endif
+                _clientAdapter.OnPacketReceived = OnPacketReceived;
+            }
+            
+            var connected = await _clientAdapter.AsyncConnect(GameEntry.GlobalGameConfig.networkConfig.connectTimeout);
+            if (connected)
+            {
+                OnConnectedSuccess?.Invoke();
             }
             else
             {
-                Log.LogError(sb =>
+                OnConnectedFailed?.Invoke();
+            }
+        }
+        
+        /// <summary>
+        /// 重连
+        /// </summary>
+        public async UniTask<bool> Reconnect()
+        {
+            if (_clientAdapter != null)
+            {
+                var count = 0;
+                var waitTime = GameEntry.GlobalGameConfig.networkConfig.reconnectInterval;
+                var waitTotalCount = GameEntry.GlobalGameConfig.networkConfig.reconnectCount;
+                OnReconnectStart?.Invoke();
+                while (count < waitTotalCount)
                 {
-                    sb.Append("发起网络连接失败");
-                }, ELogType.Network);
+                    count++;
+                    var isConnected = await _clientAdapter.AsyncReconnect(waitTime);
+                    if (isConnected)
+                    {
+                        OnReconnectSuccess?.Invoke();
+                        return true;
+                    }
+                    else
+                    {
+                        OnReconnectFail?.Invoke(count);
+                    }
+                }
+            }
+                
+            return false;
+        }
+        
+        public async UniTask Send(byte[] buffer)
+        {
+            if (_clientAdapter != null)
+            {
+                await _clientAdapter.AsyncSend(buffer);
+            }
+            else
+            {
+                // 如果发送不成功,视为连接断开,开始尝试重连
+                var reconnected = await Reconnect();
+                // 重连成功,继续发送消息
+                if (reconnected)
+                {
+                    await Send(buffer);
+                }
+                // 重连不成功,放弃发送
             }
         }
 
         /// <summary>
         /// 断开连接
         /// </summary>
-        public void Disconnect()
+        public async UniTask Disconnect()
         {
-            if (_tcpClient != null)
+            if (_clientAdapter != null)
             {
-                _tcpClient.Disconnect();
-                _tcpClient = null;
+                await _clientAdapter.AsyncDisconnect();
+                _clientAdapter = null;
             }
         }
-#endif
+
+        /// <summary>
+        /// 当收到完整包时调用
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="length"></param>
+        private void OnPacketReceived(byte[] packet, int length)
+        {
+            Temp = System.Text.Encoding.UTF8.GetString(packet, 0, length);
+        }
+
+        public string Temp;
     }
 }

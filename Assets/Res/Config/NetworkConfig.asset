@@ -12,3 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2634384565eace4d897ceab6f7b62b5, type: 3}
   m_Name: NetworkConfig
   m_EditorClassIdentifier: 
+  lobbyAddress: 127.0.0.1
+  gameAddress: 127.0.0.1
+  gamePort: 1111
+  connectTimeout: 5000
+  reconnectInterval: 5000
+  reconnectCount: 3

@@ -6,18 +6,20 @@
 
 using System;
 using System.Net;
+using Cysharp.Threading.Tasks;
+using NetCoreServer;
 
 namespace WWFramework
 {
     /// <summary>
     /// tcp客户端连接
     /// </summary>
-    public class TcpClient : NetCoreServer.TcpClient
+    public class TcpClientAdapter : TcpClient, IClientAdapter
     {
         /// <summary>
         /// 默认缓冲区长度
         /// </summary>
-        private const int DefaultBufferLength = 1024 * 4;
+        private const int DefaultBufferLength = 128;
         
         /// <summary>
         /// 接收缓冲区
@@ -43,20 +45,20 @@ namespace WWFramework
         /// <summary>
         /// 数据包接收事件
         /// </summary>
-        public System.Action<byte[], int> OnPacketReceived;
+        public Action<byte[], int> OnPacketReceived { get; set; }
 
         /// <inheritdoc/>
-        public TcpClient(IPAddress address, int port) : base(address, port)
+        public TcpClientAdapter(IPAddress address, int port) : base(address, port)
         {
         }
 
         /// <inheritdoc/>
-        public TcpClient(string address, int port) : base(address, port)
+        public TcpClientAdapter(string address, int port) : base(address, port)
         {
         }
 
         /// <inheritdoc/>
-        public TcpClient(IPEndPoint endpoint) : base(endpoint)
+        public TcpClientAdapter(IPEndPoint endpoint) : base(endpoint)
         {
         }
 
@@ -79,13 +81,30 @@ namespace WWFramework
                 }
                 else
                 {
-                    Array.Copy(_buffer, _bufferPointer, newBuffer, 0, _buffer.Length - _bufferPointer);
+                    Array.Copy(_buffer, _bufferPointer, newBuffer, 0, _bufferSize);
                 }
                 _buffer = newBuffer;
                 _bufferPointer = 0;
             }
             // 将新接收到的数据复制到缓冲区
-            Array.Copy(buffer, (int)offset, _buffer, _bufferSize, (int)size);
+            if (_bufferPointer + _bufferSize + size >= _buffer.Length)
+            {
+                if (_bufferPointer + _bufferSize >= _buffer.Length)
+                {
+                    Array.Copy(buffer, (int)offset, _buffer, _bufferPointer + _bufferSize - _buffer.Length, (int)size);
+                }
+                else
+                {
+                    var length1 = _buffer.Length - _bufferPointer - _bufferSize;
+                    var length2 = size - length1;
+                    Array.Copy(buffer, (int)offset, _buffer, _bufferPointer + _bufferSize, length1);
+                    Array.Copy(buffer, (int)offset + length1, _buffer, 0, length2);
+                }
+            }
+            else
+            {
+                Array.Copy(buffer, (int)offset, _buffer, _bufferPointer, (int)size);
+            }
             _bufferSize += (int)size;
             // 检查包头,包头检查完成后会自动检查包体
             CheckPacketHead();
@@ -111,7 +130,7 @@ namespace WWFramework
                         for (int i = 0; i < 4; i++)
                         {
                             var index = (_bufferPointer + i) % _buffer.Length;
-                            _packetLength |= (_buffer[index] << (i * 8));
+                            _packetLength |= (_buffer[index] << (24 - i * 8));
                         }
                         MovePointer(4);
                         // 检查包体
@@ -127,7 +146,7 @@ namespace WWFramework
                 if (_bufferSize >= _packetLength)
                 {
                     // 检查数据包长度是否足够
-                    if (_packetLength > _buffer.Length)
+                    if (_packetLength > _packet.Length)
                     {
                         _packet = new byte[_packetLength];
                     }
@@ -164,6 +183,85 @@ namespace WWFramework
                 _bufferPointer += moveLen;
                 _bufferPointer %= _buffer.Length;
             }
+        }
+
+        /// <inheritdoc/>
+        public async UniTask<bool> AsyncConnect(int connectTime)
+        {
+            if (this.ConnectAsync())
+            {
+                var connectTask = UniTask.WaitUntil(() => this.IsConnected);
+                var timeoutTask = UniTask.Delay(connectTime);
+                await UniTask.WhenAny(connectTask, timeoutTask);
+                if (this.IsConnected)
+                {
+                    Log.LogDebug(sb =>
+                    {
+                        sb.Append("网络连接成功");
+                    }, ELogType.Network);
+                    return true;
+                }
+                else
+                {
+                    Log.LogError(sb =>
+                    {
+                        sb.Append("网络连接超时");
+                    }, ELogType.Network);
+                    // 确保断开连接
+                    await AsyncDisconnect();
+
+                    return false;
+                }
+            }
+            else
+            {
+                Log.LogError(sb =>
+                {
+                    sb.Append("发起网络连接失败");
+                }, ELogType.Network);
+                return false;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async UniTask<bool> AsyncSend(byte[] buffer)
+        {
+            if (SendAsync(buffer))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        
+        /// <inheritdoc/>
+        public async UniTask<bool> AsyncReconnect(int reconnectTime)
+        {
+            this.ReconnectAsync();
+            
+            // 调用重连函数后,可能成功也可能失败(已经发起重连),不论是否成功,都等待成功连接上或超时
+            var reconnectTask = UniTask.WaitUntil(() => this.IsConnected);
+            var timeoutTask = UniTask.Delay(reconnectTime);
+            await UniTask.WhenAny(reconnectTask, timeoutTask);
+            if (this.IsConnected)
+            {
+                Log.LogDebug(sb =>
+                {
+                    sb.Append("网络重连成功");
+                }, ELogType.Network);
+                return true;
+            }
+            return false;
+        }
+        
+        /// <inheritdoc/>
+        public async UniTask<bool> AsyncDisconnect()
+        {
+            if (this.DisconnectAsync())
+            {
+                await UniTask.WaitUntil(() => !this.IsConnected && !this.IsConnecting);
+            }
+            return !this.IsConnected && !this.IsConnecting;
         }
     }
 }
