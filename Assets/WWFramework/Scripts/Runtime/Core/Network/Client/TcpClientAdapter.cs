@@ -42,10 +42,17 @@ namespace WWFramework
         /// </summary>
         private byte[] _packet = new byte[DefaultBufferLength];
         
-        /// <summary>
-        /// 数据包接收事件
-        /// </summary>
+
+        /// <inheritdoc/>
         public Action<byte[], int> OnPacketReceived { get; set; }
+
+        /// <inheritdoc/>
+        public Action OnUnexpectedDisconnect { get; set; }
+
+        /// <summary>
+        /// 是否客户端发起断开连接
+        /// </summary>
+        private bool _clientDisconnected;
 
         /// <inheritdoc/>
         public TcpClientAdapter(IPAddress address, int port) : base(address, port)
@@ -60,6 +67,12 @@ namespace WWFramework
         /// <inheritdoc/>
         public TcpClientAdapter(IPEndPoint endpoint) : base(endpoint)
         {
+        }
+
+        protected override void OnDisconnected()
+        {
+            base.OnDisconnected();
+            OnUnexpectedDisconnect?.Invoke();
         }
 
         /// <inheritdoc/>
@@ -237,12 +250,11 @@ namespace WWFramework
         /// <inheritdoc/>
         public async UniTask<bool> AsyncReconnect(int reconnectTime)
         {
-            this.ReconnectAsync();
+            // 确保断开连接
+            await AsyncDisconnect();
+            // 重新发起连接
+            await AsyncConnect(reconnectTime);
             
-            // 调用重连函数后,可能成功也可能失败(已经发起重连),不论是否成功,都等待成功连接上或超时
-            var reconnectTask = UniTask.WaitUntil(() => this.IsConnected);
-            var timeoutTask = UniTask.Delay(reconnectTime);
-            await UniTask.WhenAny(reconnectTask, timeoutTask);
             if (this.IsConnected)
             {
                 Log.LogDebug(sb =>
@@ -251,6 +263,9 @@ namespace WWFramework
                 }, ELogType.Network);
                 return true;
             }
+
+            // 确保断开连接
+            await AsyncDisconnect();
             return false;
         }
         

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7274a3c6425270d4db8d7eefdd67d780, type: 3}
   m_Name: GlobalGameConfig
   m_EditorClassIdentifier: 
-  enableLogType: 1
+  enableLogType: -1
   enableLogDebug: 1
   enableLogWarning: 1
   enableLogError: 1

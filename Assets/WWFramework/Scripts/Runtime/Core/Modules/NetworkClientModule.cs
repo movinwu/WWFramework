@@ -50,6 +50,11 @@ namespace WWFramework
         /// </summary>
         public System.Action OnDisconnected;
         
+        /// <summary>
+        /// 当前的连接状态
+        /// </summary>
+        public EClientState ClientState { get; private set; } = EClientState.Offline;
+        
         public UniTask OnInit()
         {
             return UniTask.CompletedTask;
@@ -64,6 +69,11 @@ namespace WWFramework
         /// </summary>
         public async UniTask Connect()
         {
+            if (ClientState != EClientState.Offline)
+            {
+                return;
+            }
+            
             if (null == _clientAdapter)
             {
 #if NETCORE_TCP
@@ -72,15 +82,27 @@ namespace WWFramework
                     GameEntry.GlobalGameConfig.networkConfig.gamePort);
 #endif
                 _clientAdapter.OnPacketReceived = OnPacketReceived;
+                _clientAdapter.OnUnexpectedDisconnect = () =>
+                {
+                    // 还在连接状态,说明首次意外断开连接,尝试重连
+                    if (ClientState == EClientState.Connected)
+                    {
+                        // 发起重连
+                        Reconnect().Forget();
+                    }
+                };
             }
             
+            ClientState = EClientState.Connecting;
             var connected = await _clientAdapter.AsyncConnect(GameEntry.GlobalGameConfig.networkConfig.connectTimeout);
             if (connected)
             {
+                ClientState = EClientState.Connected;
                 OnConnectedSuccess?.Invoke();
             }
             else
             {
+                ClientState = EClientState.Offline;
                 OnConnectedFailed?.Invoke();
             }
         }
@@ -90,8 +112,14 @@ namespace WWFramework
         /// </summary>
         public async UniTask<bool> Reconnect()
         {
+            if (ClientState != EClientState.Connected)
+            {
+                return false;
+            }
+            
             if (_clientAdapter != null)
             {
+                ClientState = EClientState.Reconnecting;
                 var count = 0;
                 var waitTime = GameEntry.GlobalGameConfig.networkConfig.reconnectInterval;
                 var waitTotalCount = GameEntry.GlobalGameConfig.networkConfig.reconnectCount;
@@ -102,6 +130,7 @@ namespace WWFramework
                     var isConnected = await _clientAdapter.AsyncReconnect(waitTime);
                     if (isConnected)
                     {
+                        ClientState = EClientState.Connected;
                         OnReconnectSuccess?.Invoke();
                         return true;
                     }
@@ -110,6 +139,10 @@ namespace WWFramework
                         OnReconnectFail?.Invoke(count);
                     }
                 }
+                
+                ClientState = EClientState.Offline;
+                // 重连失败,视为彻底断开连接
+                OnDisconnected?.Invoke();
             }
                 
             return false;
@@ -117,6 +150,11 @@ namespace WWFramework
         
         public async UniTask Send(byte[] buffer)
         {
+            if (ClientState != EClientState.Connected)
+            {
+                return;
+            }
+            
             if (_clientAdapter != null)
             {
                 await _clientAdapter.AsyncSend(buffer);
@@ -139,10 +177,17 @@ namespace WWFramework
         /// </summary>
         public async UniTask Disconnect()
         {
+            if (ClientState != EClientState.Connected)
+            {
+                return;
+            }
+            
             if (_clientAdapter != null)
             {
+                ClientState = EClientState.Disconnecting;
                 await _clientAdapter.AsyncDisconnect();
                 _clientAdapter = null;
+                ClientState = EClientState.Offline;
             }
         }
 

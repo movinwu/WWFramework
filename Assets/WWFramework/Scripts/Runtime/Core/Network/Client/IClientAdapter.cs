@@ -18,6 +18,11 @@ namespace WWFramework
         /// 数据包接收事件
         /// </summary>
         Action<byte[], int> OnPacketReceived { get; set; }
+        
+        /// <summary>
+        /// 意外断开连接事件
+        /// </summary>
+        Action OnUnexpectedDisconnect { get; set; }
 
         /// <summary>
         /// 异步发起连接

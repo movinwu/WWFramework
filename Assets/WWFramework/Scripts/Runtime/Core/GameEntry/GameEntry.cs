@@ -55,6 +55,7 @@ namespace WWFramework
         {
             // 释放各个模块并置空
             MainProcedure.OnRelease();
+            NetworkClient.OnRelease();
             MainProcedure = null;
         }
 
