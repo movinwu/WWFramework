@@ -4,7 +4,9 @@
  * 创建日期: 2025/03/26
 ------------------------------*/
 
-#define NETCORE_TCP // 定义使用NetCoreTcp
+// #define NETCORE_TCP // 定义使用NetCoreTcp
+
+#define NETCORE_UDP // 定义使用NetCoreUdp
 
 using Cysharp.Threading.Tasks;
 
@@ -24,17 +26,17 @@ namespace WWFramework
         /// 重连开始回调
         /// </summary>
         public System.Action OnReconnectStart;
-        
+
         /// <summary>
         /// 重连成功回调
         /// </summary>
         public System.Action OnReconnectSuccess;
-        
+
         /// <summary>
         /// 重连失败回调
         /// </summary>
         public System.Action<int> OnReconnectFail;
-        
+
         /// <summary>
         /// 连接成功回调
         /// </summary>
@@ -49,12 +51,12 @@ namespace WWFramework
         /// 断开连接回调
         /// </summary>
         public System.Action OnDisconnected;
-        
+
         /// <summary>
         /// 当前的连接状态
         /// </summary>
         public EClientState ClientState { get; private set; } = EClientState.Offline;
-        
+
         public UniTask OnInit()
         {
             return UniTask.CompletedTask;
@@ -73,11 +75,15 @@ namespace WWFramework
             {
                 return;
             }
-            
+
             if (null == _clientAdapter)
             {
 #if NETCORE_TCP
                 _clientAdapter = new TcpClientAdapter(
+                    GameEntry.GlobalGameConfig.networkConfig.gameAddress,
+                    GameEntry.GlobalGameConfig.networkConfig.gamePort);
+#elif NETCORE_UDP
+                _clientAdapter = new UdpClientAdapter(
                     GameEntry.GlobalGameConfig.networkConfig.gameAddress,
                     GameEntry.GlobalGameConfig.networkConfig.gamePort);
 #endif
@@ -92,7 +98,7 @@ namespace WWFramework
                     }
                 };
             }
-            
+
             ClientState = EClientState.Connecting;
             var connected = await _clientAdapter.AsyncConnect(GameEntry.GlobalGameConfig.networkConfig.connectTimeout);
             if (connected)
@@ -106,7 +112,7 @@ namespace WWFramework
                 OnConnectedFailed?.Invoke();
             }
         }
-        
+
         /// <summary>
         /// 重连
         /// </summary>
@@ -116,7 +122,7 @@ namespace WWFramework
             {
                 return false;
             }
-            
+
             if (_clientAdapter != null)
             {
                 ClientState = EClientState.Reconnecting;
@@ -139,25 +145,25 @@ namespace WWFramework
                         OnReconnectFail?.Invoke(count);
                     }
                 }
-                
+
                 ClientState = EClientState.Offline;
                 // 重连失败,视为彻底断开连接
                 OnDisconnected?.Invoke();
             }
-                
+
             return false;
         }
-        
+
         public async UniTask Send(byte[] buffer)
         {
             if (ClientState != EClientState.Connected)
             {
                 return;
             }
-            
+
             if (_clientAdapter != null)
             {
-                await _clientAdapter.AsyncSend(buffer);
+                await _clientAdapter.AsyncSend(buffer, 0, buffer.Length);
             }
             else
             {
@@ -181,7 +187,7 @@ namespace WWFramework
             {
                 return;
             }
-            
+
             if (_clientAdapter != null)
             {
                 ClientState = EClientState.Disconnecting;
@@ -200,6 +206,9 @@ namespace WWFramework
         private void OnPacketReceived(byte[] packet, int length)
         {
             // TODO 解包处理
+            TEMP = System.Text.Encoding.UTF8.GetString(packet, 0, length);
         }
+
+        public string TEMP;
     }
 }

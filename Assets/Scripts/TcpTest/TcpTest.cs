@@ -61,5 +61,11 @@ public class TcpTest : MonoBehaviour
         {
             GameEntry.NetworkClient.Disconnect().Forget();
         }
+
+        if (!string.IsNullOrEmpty(GameEntry.NetworkClient.TEMP))
+        {
+            Log.LogDebug(sb => { sb.Append(GameEntry.NetworkClient.TEMP); }, ELogType.Network);
+            GameEntry.NetworkClient.TEMP = string.Empty;
+        }
     }
 }

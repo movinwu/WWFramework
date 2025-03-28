@@ -6,42 +6,51 @@
 
 using System;
 using System.Net;
+using System.Net.Sockets;
 using Cysharp.Threading.Tasks;
-using NetCoreServer;
+using TcpClient = NetCoreServer.TcpClient;
 
 namespace WWFramework
 {
     /// <summary>
-    /// tcp客户端连接
+    /// tcp客户端连接适配器
     /// </summary>
     public class TcpClientAdapter : TcpClient, IClientAdapter
     {
         /// <summary>
         /// 默认缓冲区长度
         /// </summary>
-        private const int DefaultBufferLength = 128;
-        
+        private const int DefaultBufferLength = 4096;
+
+        /// <summary>
+        /// 数据包头长度
+        /// </summary>
+        private const int PacketHeadLength = 4;
+
         /// <summary>
         /// 接收缓冲区
         /// </summary>
         private byte[] _buffer = new byte[DefaultBufferLength];
+
         /// <summary>
         /// 缓冲区指针头
         /// </summary>
         private int _bufferPointer = 0;
+
         /// <summary>
         /// 当前缓冲区容量
         /// </summary>
-        private int _bufferSize = 0;
+        private long _bufferSize = 0;
+
         /// <summary>
         /// 数据包长度
         /// </summary>
         private int _packetLength = -1;
+
         /// <summary>
         /// 数据包
         /// </summary>
         private byte[] _packet = new byte[DefaultBufferLength];
-        
 
         /// <inheritdoc/>
         public Action<byte[], int> OnPacketReceived { get; set; }
@@ -69,6 +78,7 @@ namespace WWFramework
         {
         }
 
+        /// <inheritdoc/>
         protected override void OnDisconnected()
         {
             base.OnDisconnected();
@@ -78,7 +88,7 @@ namespace WWFramework
         /// <inheritdoc/>
         protected override void OnReceived(byte[] buffer, long offset, long size)
         {
-            // 处理粘包/半包问题,目前使用4字节长度前缀解决
+            // 处理粘包/半包问题,目前使用固定字节长度前缀解决
             // 是否需要扩容缓冲区
             if (_bufferSize + size > _buffer.Length)
             {
@@ -96,9 +106,11 @@ namespace WWFramework
                 {
                     Array.Copy(_buffer, _bufferPointer, newBuffer, 0, _bufferSize);
                 }
+
                 _buffer = newBuffer;
                 _bufferPointer = 0;
             }
+
             // 将新接收到的数据复制到缓冲区
             if (_bufferPointer + _bufferSize + size >= _buffer.Length)
             {
@@ -118,10 +130,11 @@ namespace WWFramework
             {
                 Array.Copy(buffer, (int)offset, _buffer, _bufferPointer, (int)size);
             }
+
             _bufferSize += (int)size;
             // 检查包头,包头检查完成后会自动检查包体
             CheckPacketHead();
-            
+
             base.OnReceived(buffer, offset, size);
 
             // 检查包头
@@ -136,22 +149,23 @@ namespace WWFramework
                 else
                 {
                     // 包头没有赋值,检查数据长度
-                    if (_bufferSize >= 4)
+                    if (_bufferSize >= PacketHeadLength)
                     {
                         // 读取数据长度
                         _packetLength = 0;
-                        for (int i = 0; i < 4; i++)
+                        for (int i = 0; i < PacketHeadLength; i++)
                         {
                             var index = (_bufferPointer + i) % _buffer.Length;
-                            _packetLength |= (_buffer[index] << (24 - i * 8));
+                            _packetLength |= (_buffer[index] << ((PacketHeadLength - 1 - i) * 8));
                         }
-                        MovePointer(4);
+
+                        MovePointer(PacketHeadLength);
                         // 检查包体
                         CheckPacketBody();
                     }
                 }
             }
-            
+
             // 检查包体
             void CheckPacketBody()
             {
@@ -163,6 +177,7 @@ namespace WWFramework
                     {
                         _packet = new byte[_packetLength];
                     }
+
                     // 从缓冲区中读取数据包
                     if (_bufferPointer + _packetLength >= _buffer.Length)
                     {
@@ -175,6 +190,7 @@ namespace WWFramework
                     {
                         Array.Copy(_buffer, _bufferPointer, _packet, 0, _packetLength);
                     }
+
                     // 处理数据包
                     OnPacketReceived?.Invoke(_packet, _packetLength);
                     // 更新缓冲区偏移量和数据长度
@@ -184,7 +200,7 @@ namespace WWFramework
                     CheckPacketHead();
                 }
             }
-            
+
             // 移动缓冲区指针
             void MovePointer(int moveLen)
             {
@@ -192,10 +208,22 @@ namespace WWFramework
                 {
                     throw new Exception("缓冲区指针越界");
                 }
+
                 _bufferSize -= moveLen;
                 _bufferPointer += moveLen;
                 _bufferPointer %= _buffer.Length;
             }
+        }
+
+        /// <inheritdoc/>
+        protected override void OnError(SocketError error)
+        {
+            base.OnError(error);
+            Log.LogError(sb =>
+            {
+                sb.Append("网络连接失败");
+                sb.Append($"错误码:{error}");
+            }, ELogType.Network);
         }
 
         /// <inheritdoc/>
@@ -208,18 +236,12 @@ namespace WWFramework
                 await UniTask.WhenAny(connectTask, timeoutTask);
                 if (this.IsConnected)
                 {
-                    Log.LogDebug(sb =>
-                    {
-                        sb.Append("网络连接成功");
-                    }, ELogType.Network);
+                    Log.LogDebug(sb => { sb.Append("网络连接成功"); }, ELogType.Network);
                     return true;
                 }
                 else
                 {
-                    Log.LogError(sb =>
-                    {
-                        sb.Append("网络连接超时");
-                    }, ELogType.Network);
+                    Log.LogError(sb => { sb.Append("网络连接超时"); }, ELogType.Network);
                     // 确保断开连接
                     await AsyncDisconnect();
 
@@ -228,25 +250,22 @@ namespace WWFramework
             }
             else
             {
-                Log.LogError(sb =>
-                {
-                    sb.Append("发起网络连接失败");
-                }, ELogType.Network);
+                Log.LogError(sb => { sb.Append("发起网络连接失败"); }, ELogType.Network);
                 return false;
             }
         }
 
         /// <inheritdoc/>
-        public async UniTask<bool> AsyncSend(byte[] buffer)
+        public async UniTask<bool> AsyncSend(byte[] buffer, int offset, int size)
         {
-            if (SendAsync(buffer))
+            if (SendAsync(buffer, offset, size))
             {
                 return true;
             }
 
             return false;
         }
-        
+
         /// <inheritdoc/>
         public async UniTask<bool> AsyncReconnect(int reconnectTime)
         {
@@ -254,13 +273,10 @@ namespace WWFramework
             await AsyncDisconnect();
             // 重新发起连接
             await AsyncConnect(reconnectTime);
-            
+
             if (this.IsConnected)
             {
-                Log.LogDebug(sb =>
-                {
-                    sb.Append("网络重连成功");
-                }, ELogType.Network);
+                Log.LogDebug(sb => { sb.Append("网络重连成功"); }, ELogType.Network);
                 return true;
             }
 
@@ -268,7 +284,7 @@ namespace WWFramework
             await AsyncDisconnect();
             return false;
         }
-        
+
         /// <inheritdoc/>
         public async UniTask<bool> AsyncDisconnect()
         {
@@ -276,6 +292,7 @@ namespace WWFramework
             {
                 await UniTask.WaitUntil(() => !this.IsConnected && !this.IsConnecting);
             }
+
             return !this.IsConnected && !this.IsConnecting;
         }
     }

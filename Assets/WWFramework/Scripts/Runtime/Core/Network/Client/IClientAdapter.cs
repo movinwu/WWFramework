@@ -34,8 +34,10 @@ namespace WWFramework
         /// 异步发送数据包
         /// </summary>
         /// <param name="buffer"></param>
+        /// <param name="offset"></param>
+        /// <param name="size"></param>
         /// <returns></returns>
-        UniTask<bool> AsyncSend(byte[] buffer);
+        UniTask<bool> AsyncSend(byte[] buffer, int offset, int size);
 
         /// <summary>
         /// 异步重连

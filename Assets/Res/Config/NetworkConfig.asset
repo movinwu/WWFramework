@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lobbyAddress: 127.0.0.1
   gameAddress: 127.0.0.1
-  gamePort: 1111
+  gamePort: 3333
   connectTimeout: 5000
   reconnectInterval: 5000
   reconnectCount: 3
