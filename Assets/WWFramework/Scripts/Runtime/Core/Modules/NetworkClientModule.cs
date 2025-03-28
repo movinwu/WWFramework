@@ -188,6 +188,7 @@ namespace WWFramework
                 await _clientAdapter.AsyncDisconnect();
                 _clientAdapter = null;
                 ClientState = EClientState.Offline;
+                OnDisconnected?.Invoke();
             }
         }
 
@@ -198,9 +199,7 @@ namespace WWFramework
         /// <param name="length"></param>
         private void OnPacketReceived(byte[] packet, int length)
         {
-            Temp = System.Text.Encoding.UTF8.GetString(packet, 0, length);
+            // TODO 解包处理
         }
-
-        public string Temp;
     }
 }

@@ -57,10 +57,9 @@ public class TcpTest : MonoBehaviour
             GameEntry.NetworkClient.Send(System.Text.Encoding.UTF8.GetBytes(Input.mousePosition.ToString())).Forget();
         }
 
-        if (!string.IsNullOrEmpty(GameEntry.NetworkClient.Temp))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            Debug.Log(GameEntry.NetworkClient.Temp);
-            GameEntry.NetworkClient.Temp = string.Empty;
+            GameEntry.NetworkClient.Disconnect().Forget();
         }
     }
 }
