@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 299319291}
   - component: {fileID: 299319292}
   m_Layer: 0
-  m_Name: TcpTest
+  m_Name: NetworkTest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

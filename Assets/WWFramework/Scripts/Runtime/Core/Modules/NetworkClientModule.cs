@@ -79,6 +79,7 @@ namespace WWFramework
 
             if (null == _clientAdapter)
             {
+                // 使用局部宏定义,修改网络连接类型直接在这个脚本中修改宏定义
 #if NETCORE_TCP
                 _clientAdapter = new TcpClientAdapter(
                     GameEntry.GlobalGameConfig.networkConfig.gameAddress,
@@ -229,9 +230,6 @@ namespace WWFramework
         private void OnPacketReceived(byte[] packet, int length)
         {
             // TODO 解包处理
-            TEMP = System.Text.Encoding.UTF8.GetString(packet, 0, length);
         }
-
-        public string TEMP;
     }
 }

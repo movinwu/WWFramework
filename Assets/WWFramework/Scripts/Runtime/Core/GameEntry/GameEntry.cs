@@ -33,6 +33,11 @@ namespace WWFramework
         /// 网络模块
         /// </summary>
         public static NetworkClientModule NetworkClient { get; private set; }
+        
+        /// <summary>
+        /// 池模块
+        /// </summary>
+        public static PoolModule Pool { get; private set; }
 
         #endregion 主包中各模块生声明
 
@@ -46,6 +51,7 @@ namespace WWFramework
             // 初始化各个模块
             MainProcedure = AddModule<MainProcedureModule>();
             NetworkClient = AddModule<NetworkClientModule>();
+            Pool = AddModule<PoolModule>();
             
             // 模块初始化完成,开始执行主流程
             MainProcedure.StartMainProcedure().Forget();
