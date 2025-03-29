@@ -5,8 +5,9 @@
 ------------------------------*/
 
 // #define NETCORE_TCP // 定义使用NetCoreTcp
-
-#define NETCORE_UDP // 定义使用NetCoreUdp
+// #define NETCORE_UDP // 定义使用NetCoreUdp
+// #define NETCORE_WEBSOCKETS // 定义使用NetCoreWebSockets
+#define NETCORE_UNITYWEBSOCKETS // 定义使用UnityWebSockets
 
 using Cysharp.Threading.Tasks;
 
@@ -86,6 +87,11 @@ namespace WWFramework
                 _clientAdapter = new UdpClientAdapter(
                     GameEntry.GlobalGameConfig.networkConfig.gameAddress,
                     GameEntry.GlobalGameConfig.networkConfig.gamePort);
+#elif NETCORE_WEBSOCKETS
+#elif NETCORE_UNITYWEBSOCKETS
+                _clientAdapter = new UnityWebsocketClientAdapter(
+                    GameEntry.GlobalGameConfig.networkConfig.gameAddress,
+                    GameEntry.GlobalGameConfig.networkConfig.gamePort);
 #endif
                 _clientAdapter.OnPacketReceived = OnPacketReceived;
                 _clientAdapter.OnUnexpectedDisconnect = () =>
@@ -160,21 +166,38 @@ namespace WWFramework
             {
                 return;
             }
-
+            
+            bool isSendSuccess = false;
             if (_clientAdapter != null)
             {
-                await _clientAdapter.AsyncSend(buffer, 0, buffer.Length);
+                isSendSuccess = await _clientAdapter.AsyncSend(buffer, 0, buffer.Length);
             }
-            else
+
+            if (!isSendSuccess)
             {
-                // 如果发送不成功,视为连接断开,开始尝试重连
-                var reconnected = await Reconnect();
-                // 重连成功,继续发送消息
-                if (reconnected)
+                // 正在连接中,开始尝试重连
+                if (ClientState == EClientState.Connected)
                 {
-                    await Send(buffer);
+                    var reconnected = await Reconnect();
+                    // 重连成功,继续发送消息
+                    if (reconnected)
+                    {
+                        await Send(buffer);
+                    }
+                    // 重连不成功,放弃发送
                 }
-                // 重连不成功,放弃发送
+                // 正在重连中,等待重连成功或重连失败
+                else if (ClientState == EClientState.Reconnecting)
+                {
+                    await UniTask.WaitUntil(() => ClientState != EClientState.Reconnecting);
+                    // 重连成功,继续发送消息
+                    if (ClientState == EClientState.Connected)
+                    {
+                        await Send(buffer);
+                    }
+                    // 重连不成功,放弃发送
+                }
+                // 其他状态,放弃发送
             }
         }
 

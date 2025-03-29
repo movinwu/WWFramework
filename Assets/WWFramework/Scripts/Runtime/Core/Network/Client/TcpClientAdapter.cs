@@ -58,11 +58,6 @@ namespace WWFramework
         /// <inheritdoc/>
         public Action OnUnexpectedDisconnect { get; set; }
 
-        /// <summary>
-        /// 是否客户端发起断开连接
-        /// </summary>
-        private bool _clientDisconnected;
-
         /// <inheritdoc/>
         public TcpClientAdapter(IPAddress address, int port) : base(address, port)
         {

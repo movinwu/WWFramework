@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: NetworkConfig
   m_EditorClassIdentifier: 
   lobbyAddress: 127.0.0.1
-  gameAddress: 127.0.0.1
-  gamePort: 3333
+  gameAddress: wss://echo.websocket.events
+  gamePort: 80
   connectTimeout: 5000
   reconnectInterval: 5000
   reconnectCount: 3

@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using WWFramework;
 
-public class TcpTest : MonoBehaviour
+public class NetworkTest : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
