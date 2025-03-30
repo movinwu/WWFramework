@@ -251,14 +251,14 @@ namespace WWFramework
         }
 
         /// <inheritdoc/>
-        public async UniTask<bool> AsyncSend(byte[] buffer, int offset, int size)
+        public UniTask<bool> AsyncSend(byte[] buffer, int offset, int size)
         {
             if (SendAsync(buffer, offset, size))
             {
-                return true;
+                return UniTask.FromResult(true);
             }
 
-            return false;
+            return UniTask.FromResult(false);
         }
 
         /// <inheritdoc/>

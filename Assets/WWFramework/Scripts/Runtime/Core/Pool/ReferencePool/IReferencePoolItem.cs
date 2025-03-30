@@ -14,6 +14,11 @@ namespace WWFramework
     public interface IReferencePoolItem
     {
         /// <summary>
+        /// 池中存储对象的类型ID
+        /// </summary>
+        int PoolItemTypeId { get; set; }
+        
+        /// <summary>
         /// 当从池中取出时调用
         /// </summary>
         /// <returns></returns>

@@ -13,7 +13,7 @@ namespace WWFramework
     /// MainProcedureModule 的 Inspector 编辑器
     /// </summary>
     [CustomEditor(typeof(MainProcedureModule))]
-    public class MainProcedureModuleEditor : Editor
+    public class MainProcedureModuleEditor : InspectorEditor
     {
         private bool _showProcedures = true;
         private Vector2 _scrollPos;
@@ -106,25 +106,6 @@ namespace WWFramework
                 {
                     DrawProcedureTree(child, indentLevel + 1);
                 }
-            }
-        }
-
-        private void OnEnable()
-        {
-            // 注册刷新回调
-            EditorApplication.update += RepaintIfPlaying;
-        }
-
-        private void OnDisable()
-        {
-            EditorApplication.update -= RepaintIfPlaying;
-        }
-
-        private void RepaintIfPlaying()
-        {
-            if (EditorApplication.isPlaying)
-            {
-                Repaint();
             }
         }
     }

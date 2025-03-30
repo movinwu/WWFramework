@@ -43,6 +43,9 @@ namespace WWFramework
 
         private void Awake()
         {
+            // 不销毁
+            DontDestroyOnLoad(this.gameObject);
+            
             // 赋值全局游戏配置
             GlobalGameConfig = globalGameConfig;
             // 初始化日志

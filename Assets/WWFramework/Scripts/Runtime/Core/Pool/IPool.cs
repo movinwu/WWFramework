@@ -10,9 +10,15 @@ namespace WWFramework
 {
     /// <summary>
     /// 缓存池接口
+    /// <para> 实现 <see cref="IPool"/> 的缓存池对象，都需要继承Monobehaviour。 </para>
     /// </summary>
     public interface IPool
     {
+        /// <summary>
+        /// 缓存池Id
+        /// </summary>
+        int PoolId { get; set; }
+        
         /// <summary>
         /// 释放所有缓存
         /// </summary>

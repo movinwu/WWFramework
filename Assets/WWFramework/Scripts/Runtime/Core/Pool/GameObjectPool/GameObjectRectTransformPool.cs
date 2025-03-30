@@ -1,5 +1,5 @@
 /*------------------------------
- * 脚本名称: GameObjectPooll
+ * 脚本名称: GameObjectRectTransformPool
  * 创建者: movin
  * 创建日期: 2025/03/29
 ------------------------------*/
@@ -14,12 +14,12 @@ namespace WWFramework
     /// <summary>
     /// RectTransform游戏对象缓存池
     /// </summary>
-    public class GameObjectRectTransformPool : MonoBehaviour, IPool
+    public class GameObjectRectTransformPool : MonoBehaviour, IGameObjectPool
     {
         /// <summary>
         /// 闲置引用列表
         /// </summary>
-        private readonly List<GameObject> _freeItemList = new List<GameObject>();
+        private readonly List<GameObjectPoolItem> _freeItemList = new List<GameObjectPoolItem>();
 
         /// <summary>
         /// 游戏对象模板模板
@@ -49,7 +49,10 @@ namespace WWFramework
         /// <summary>
         /// 已经取用的引用hash表
         /// </summary>
-        private readonly HashSet<GameObject> _spawnedItemHash = new HashSet<GameObject>();
+        private HashSet<GameObjectPoolItem> _spawnedItemHash = new HashSet<GameObjectPoolItem>();
+
+        /// <inheritdoc/>
+        public int PoolId { get; set; }
         
         /// <summary>
         /// 初始化
@@ -77,24 +80,16 @@ namespace WWFramework
                 return;
             }
             
+            _freeItemList.Clear();
+            _spawnedItemHash.Clear();
+            
             _gameObjectPrefab = gameObjectPrefab;
-            RectTransform rectTrans = null;
-            if (null == spawnParent || null == despawnParent)
-            {
-                rectTrans = this.GetComponent<RectTransform>();
-                if (null == rectTrans)
-                {
-                    rectTrans = this.gameObject.GetComponent<RectTransform>();
-                }
-            }
+            RectTransform rectTrans = this.GetOrAddComponent<RectTransform>();
             _spawnParent = null == spawnParent ? rectTrans : spawnParent;
             _despawnParent = null == despawnParent ? rectTrans : despawnParent;
             _gameObjectPrefab.name = "OriginalGameObject";
             _gameObjectPrefab.transform.SetParent(_spawnParent, false);
             _gameObjectPrefab.SetActive(false);
-            _gameObjectPrefab.transform.localPosition = Vector3.zero;
-            _gameObjectPrefab.transform.localRotation = Quaternion.identity;
-            _gameObjectPrefab.transform.localScale = Vector3.one;
             _onSpawnFromPool = onSpawnFromPool;
             _onDespawnToPool = onDespawnToPool;
             
@@ -102,12 +97,11 @@ namespace WWFramework
             for (int i = curCount; i < preCreateNum; i++)
             {
                 var item = GameObject.Instantiate(gameObjectPrefab, _despawnParent, false);
-                item.transform.localPosition = Vector3.zero;
-                item.transform.localRotation = Quaternion.identity;
-                item.transform.localScale = Vector3.one;
                 item.SetActive(false);
                 item.name = "PooledItem";
-                _freeItemList.Add(item);
+                var poolItem = item.GetOrAddComponent<GameObjectPoolItem>();
+                poolItem.Pool = this;
+                _freeItemList.Add(poolItem);
             }
         }
         
@@ -119,18 +113,24 @@ namespace WWFramework
         /// <param name="localRotation">指定旋转</param>
         /// <param name="localScale">指定缩放</param>
         /// <returns></returns>
-        public async UniTask<GameObject> Spawn(
-            RectTransform parent = null,
-            Vector3 localPosition = default,
-            Quaternion localRotation = default,
-            Vector3 localScale = default)
+        public async UniTask<GameObject> Spawn(RectTransform parent = null)
         {
+            // 校验引用池模板
+            if (null == _gameObjectPrefab)
+            {
+                Log.LogError(sb =>
+                {
+                    sb.Append("GameObjectTransformPool: Spawn gameObjectPrefab is null");
+                });
+                return null;
+            }
+            
             if (null == parent)
             {
                 parent = _spawnParent;
             }
             
-            GameObject item = null;
+            GameObjectPoolItem item = null;
             // 检验闲置引用列表是否为空
             if (_freeItemList.Count > 0)
             {
@@ -142,27 +142,25 @@ namespace WWFramework
             else
             {
                 // 创建一个新引用
-                item = GameObject.Instantiate(_gameObjectPrefab, parent, false);
+                var obj = GameObject.Instantiate(_gameObjectPrefab, parent, false);
+                obj.name = "PooledItem";
+                item = obj.GetOrAddComponent<GameObjectPoolItem>();
+                item.Pool = this;
                 _spawnedItemHash.Add(item);
             }
             
-            item.transform.localPosition = localPosition;
-            item.transform.localRotation = localRotation;
-            item.transform.localScale = localScale;
+            item.gameObject.SetActive(true);
             if (null != _onSpawnFromPool)
             {
-                await _onSpawnFromPool(item);
+                await _onSpawnFromPool(item.gameObject);
             }
-            return item;
+            return item.gameObject;
         }
         
-        /// <summary>
-        /// 将引用返回到引用池中
-        /// </summary>
-        /// <param name="item"></param>
-        public async UniTask Despawn(GameObject item)
+        /// <inheritdoc/>
+        public async UniTask Despawn(GameObject gameObject, bool isDestroy = false)
         {
-            if (null == item)
+            if (null == gameObject)
             {
                 Log.LogError(sb =>
                 {
@@ -171,46 +169,58 @@ namespace WWFramework
                 return;
             }
             
-            // 从正在使用的引用列表中移除
-            if (_spawnedItemHash.Remove(item))
-            {
-                _freeItemList.Add(item);
-                item.transform.SetParent(_despawnParent, false);
-                item.SetActive(false);
-                item.transform.localPosition = Vector3.zero;
-                item.transform.localRotation = Quaternion.identity;
-                item.transform.localScale = Vector3.one;
-                if (null != _onDespawnToPool)
-                {
-                    await _onDespawnToPool(item);
-                }
-            }
-            else
+            var item = gameObject.GetComponent<GameObjectPoolItem>();
+            if (null == item)
             {
                 Log.LogError(sb =>
                 {
                     sb.Append("GameObjectTransformPool: Despawn item not found");
                 });
+                return;
+            }
+            
+            // 从正在使用的引用列表中移除
+            if (_spawnedItemHash.Remove(item))
+            {
+                if (isDestroy)
+                {
+                    return;
+                }
+                _freeItemList.Add(item);
+                item.transform.SetParent(_despawnParent, false);
+                item.gameObject.SetActive(false);
+                if (null != _onDespawnToPool)
+                {
+                    await _onDespawnToPool(item.gameObject);
+                }
+            }
+            // 对于已经被删除的物体, 从空闲池中删除
+            else if (isDestroy)
+            {
+                _freeItemList.Remove(item);
             }
         }
 
         /// <inheritdoc/>
         public async UniTask DespawnAll()
         {
-            foreach (var item in _spawnedItemHash)
+            var newHash = new HashSet<GameObjectPoolItem>(_spawnedItemHash.Count);
+            (newHash, _spawnedItemHash) = (_spawnedItemHash, newHash);
+            foreach (var item in newHash)
             {
                 _freeItemList.Add(item);
                 item.transform.SetParent(_despawnParent, false);
-                item.SetActive(false);
+                item.gameObject.SetActive(false);
                 item.transform.localPosition = Vector3.zero;
                 item.transform.localRotation = Quaternion.identity;
                 item.transform.localScale = Vector3.one;
+                item.Pool = null;
                 if (null != _onDespawnToPool)
                 {
-                    await _onDespawnToPool(item);
+                    await _onDespawnToPool(item.gameObject);
                 }
             }
-            _spawnedItemHash.Clear();
+            newHash.Clear();
         }
 
         /// <summary>
@@ -219,8 +229,9 @@ namespace WWFramework
         private void OnDestroy()
         {
             DespawnAll().Forget();
-            _spawnedItemHash.Clear();
-            _freeItemList.Clear();
+            
+            // 确保意外销毁时从缓存池模块中移除引用
+            GameEntry.Pool.RemovePool(this.PoolId).Forget();
         }
     }
 }

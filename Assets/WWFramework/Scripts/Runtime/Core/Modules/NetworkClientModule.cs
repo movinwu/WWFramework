@@ -89,6 +89,7 @@ namespace WWFramework
                     GameEntry.GlobalGameConfig.networkConfig.gameAddress,
                     GameEntry.GlobalGameConfig.networkConfig.gamePort);
 #elif NETCORE_WEBSOCKETS
+                // TODO
 #elif NETCORE_UNITYWEBSOCKETS
                 _clientAdapter = new UnityWebsocketClientAdapter(
                     GameEntry.GlobalGameConfig.networkConfig.gameAddress,
