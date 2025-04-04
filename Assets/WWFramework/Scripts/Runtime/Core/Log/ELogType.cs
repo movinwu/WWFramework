@@ -36,5 +36,10 @@ namespace WWFramework
         /// 网络日志
         /// </summary>
         Network = 1 << 4,
+        
+        /// <summary>
+        /// 事件日志
+        /// </summary>
+        Event = 1 << 5,
     }
 }

@@ -20,6 +20,9 @@ namespace WWFramework
         [Header("全局游戏配置"), SerializeField]
         private GameConfig globalGameConfig;
 
+        /// <summary>
+        /// 全局游戏配置
+        /// </summary>
         public static GameConfig GlobalGameConfig { get; private set; }
 
         #region 主包中各模块声明
@@ -38,6 +41,11 @@ namespace WWFramework
         /// 池模块
         /// </summary>
         public static PoolModule Pool { get; private set; }
+        
+        /// <summary>
+        /// 事件模块
+        /// </summary>
+        public static EventModule Event { get; private set; }
 
         #endregion 主包中各模块生声明
 
@@ -55,6 +63,7 @@ namespace WWFramework
             MainProcedure = AddModule<MainProcedureModule>();
             NetworkClient = AddModule<NetworkClientModule>();
             Pool = AddModule<PoolModule>();
+            Event = AddModule<EventModule>();
             
             // 模块初始化完成,开始执行主流程
             MainProcedure.StartMainProcedure().Forget();
@@ -65,7 +74,12 @@ namespace WWFramework
             // 释放各个模块并置空
             MainProcedure.OnRelease();
             NetworkClient.OnRelease();
+            Pool.OnRelease();
+            Event.OnRelease();
             MainProcedure = null;
+            NetworkClient = null;
+            Pool = null;
+            Event = null;
         }
 
         /// <summary>
