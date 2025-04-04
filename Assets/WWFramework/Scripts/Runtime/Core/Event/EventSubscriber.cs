@@ -102,7 +102,6 @@ namespace WWFramework
             {
                 EventCenter.frame = frame;
                 EventCenter.framePublishTimer = 0;
-                return;
             }
             
             if (EventCenter.framePublishTimer <= EventCenter.MAX_FRAME_PUBLISH_TIME || force)

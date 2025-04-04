@@ -511,5 +511,107 @@ namespace WWFramework
             }
         }
 
+        /// <summary>
+        /// 订阅事件(4个参数)
+        /// </summary>
+        public void Subscribe<T1, T2, T3, T4>(ulong eventId, Action<T1, T2, T3, T4> action)
+        {
+            if (null == action)
+            {
+                Log.LogError(s =>
+                {
+                    s.Append("订阅事件为空, ");
+                    s.Append($"事件id:");
+                    s.Append(eventId);
+                }, ELogType.Event);
+                return;
+            }
+            if (EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId == 0)
+            {
+                EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId = UniqueIDGenerator.ULongID;
+            }
+            if (!_eventSubscribers.TryGetValue(EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId, out var subscriber))
+            {
+                subscriber = new EventSubscriber<Action<T1, T2, T3, T4>>();
+                _eventSubscribers.Add(EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId, subscriber);
+            }
+            if (subscriber is EventSubscriber<Action<T1, T2, T3, T4>> actionSubscriber)
+            {
+                actionSubscriber.Subscribe(eventId, action);
+            }
+        }
+        
+        /// <summary>
+        /// 取消订阅事件(4个参数)
+        /// </summary>
+        public void Unsubscribe<T1, T2, T3, T4>(ulong eventId, Action<T1, T2, T3, T4> action)
+        {
+            if (null == action)
+            {
+                Log.LogError(s =>
+                {
+                    s.Append("取消订阅事件为空, ");
+                    s.Append($"事件id:");
+                    s.Append(eventId);
+                }, ELogType.Event);
+                return;
+            }
+            if (EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId == 0)
+            {
+                EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId = UniqueIDGenerator.ULongID;
+            }
+            if (!_eventSubscribers.TryGetValue(EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId, out var subscriber))
+            {
+                Log.LogWarning(s =>
+                {
+                    s.Append("事件没有订阅但是试图取消订阅, ");
+                    s.Append($"事件id:");
+                    s.Append(eventId);
+                }, ELogType.Event);
+                return;
+            }
+            if (subscriber is EventSubscriber<Action<T1, T2, T3, T4>> actionSubscriber)
+            {
+                actionSubscriber.Unsubscribe(eventId, action);
+            }
+        }
+        
+        /// <summary>
+        /// 发布事件(4个参数)
+        /// </summary>
+        public void Publish<T1, T2, T3, T4>(ulong eventId, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+        {
+            if (EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId == 0)
+            {
+                EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId = UniqueIDGenerator.ULongID;
+            }
+            if (!_eventSubscribers.TryGetValue(EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId, out var subscriber))
+            {
+                return;
+            }
+            if (subscriber is EventSubscriber<Action<T1, T2, T3, T4>> actionSubscriber)
+            {
+                actionSubscriber.Publish(eventId, action => action(arg1, arg2, arg3, arg4));
+            }
+        }
+        
+        /// <summary>
+        /// 延迟发布事件(4个参数)
+        /// </summary>
+        public void PublishDelay<T1, T2, T3, T4>(ulong eventId, T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+        {
+            if (EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId == 0)
+            {
+                EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId = UniqueIDGenerator.ULongID;
+            }
+            if (!_eventSubscribers.TryGetValue(EventSubscriber<Action<T1, T2, T3, T4>>.SubscriberId, out var subscriber))
+            {
+                return;
+            }
+            if (subscriber is EventSubscriber<Action<T1, T2, T3, T4>> actionSubscriber)
+            {
+                actionSubscriber.PublishDelay(eventId, action => action(arg1, arg2, arg3, arg4));
+            }
+        }
     }
 }

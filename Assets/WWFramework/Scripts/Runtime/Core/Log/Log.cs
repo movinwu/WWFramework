@@ -71,31 +71,28 @@ namespace WWFramework
             }
 
             LOGInfoBuilder.Clear();
-            // 打印当前运行时间
-            LOGInfoBuilder.Append("[当前运行时间");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.realtimeSinceStartup);
             LOGInfoBuilder.Append("] ");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[打印类型");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(logType);
             LOGInfoBuilder.Append("]");
             LOGInfoBuilder.Append(" ");
-            AppendColor();
-            logBuild(LOGInfoBuilder);
-            LOGInfoBuilder.Append("</color>");
-            // 换行打印当前帧数等信息
-            LOGInfoBuilder.AppendLine();
-            LOGInfoBuilder.Append("[第");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.frameCount);
             LOGInfoBuilder.Append("帧]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[帧耗时");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Mathf.RoundToInt(Time.deltaTime * 1000f));
             LOGInfoBuilder.Append("ms]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[游戏时间倍率");
+            LOGInfoBuilder.Append("[×");
             LOGInfoBuilder.Append(Time.timeScale.ToString("F2"));
             LOGInfoBuilder.Append("]");
+            AppendColor();
+            logBuild(LOGInfoBuilder);
+            LOGInfoBuilder.Append("</color>");
             UnityEngine.Debug.Log(LOGInfoBuilder.ToString());
 
             void AppendColor()
@@ -148,31 +145,28 @@ namespace WWFramework
             }
 
             LOGInfoBuilder.Clear();
-            // 打印当前运行时间
-            LOGInfoBuilder.Append("[当前运行时间");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.realtimeSinceStartup);
             LOGInfoBuilder.Append("] ");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[打印类型");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(logType);
             LOGInfoBuilder.Append("]");
             LOGInfoBuilder.Append(" ");
-            AppendColor();
-            logBuild(LOGInfoBuilder);
-            LOGInfoBuilder.Append("</color>");
-            // 换行打印当前帧数等信息
-            LOGInfoBuilder.AppendLine();
-            LOGInfoBuilder.Append("[第");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.frameCount);
             LOGInfoBuilder.Append("帧]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[帧耗时");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Mathf.RoundToInt(Time.deltaTime * 1000f));
             LOGInfoBuilder.Append("ms]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[游戏时间倍率");
+            LOGInfoBuilder.Append("[×");
             LOGInfoBuilder.Append(Time.timeScale.ToString("F2"));
             LOGInfoBuilder.Append("]");
+            AppendColor();
+            logBuild(LOGInfoBuilder);
+            LOGInfoBuilder.Append("</color>");
             UnityEngine.Debug.LogWarning(LOGInfoBuilder.ToString());
 
             void AppendColor()
@@ -225,31 +219,28 @@ namespace WWFramework
             }
 
             LOGInfoBuilder.Clear();
-            // 打印当前运行时间
-            LOGInfoBuilder.Append("[当前运行时间");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.realtimeSinceStartup);
             LOGInfoBuilder.Append("] ");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[打印类型");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(logType);
             LOGInfoBuilder.Append("]");
             LOGInfoBuilder.Append(" ");
-            AppendColor();
-            logBuild(LOGInfoBuilder);
-            LOGInfoBuilder.Append("</color>");
-            // 换行打印当前帧数等信息
-            LOGInfoBuilder.AppendLine();
-            LOGInfoBuilder.Append("[第");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Time.frameCount);
             LOGInfoBuilder.Append("帧]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[帧耗时");
+            LOGInfoBuilder.Append("[");
             LOGInfoBuilder.Append(Mathf.RoundToInt(Time.deltaTime * 1000f));
             LOGInfoBuilder.Append("ms]");
             LOGInfoBuilder.Append(" ");
-            LOGInfoBuilder.Append("[游戏时间倍率");
+            LOGInfoBuilder.Append("[×");
             LOGInfoBuilder.Append(Time.timeScale.ToString("F2"));
             LOGInfoBuilder.Append("]");
+            AppendColor();
+            logBuild(LOGInfoBuilder);
+            LOGInfoBuilder.Append("</color>");
             UnityEngine.Debug.LogError(LOGInfoBuilder.ToString());
 
             void AppendColor()
