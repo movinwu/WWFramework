@@ -39,11 +39,11 @@ namespace WWFramework
         /// 当前标签
         /// </summary>
         public ITab CurrentTab => CurrentIndex >= 0 && CurrentIndex < _tabs.Count ? _tabs[CurrentIndex] : null;
-
+        
         /// <summary>
-        /// 标签切换中
+        /// 页签状态
         /// </summary>
-        private bool _isTabSwitching = false;
+        public ETabGroupState State { get; private set; } = ETabGroupState.None;
 
         /// <summary>
         /// 重新排布标签委托
@@ -71,6 +71,8 @@ namespace WWFramework
                 return;
             }
 
+            State = ETabGroupState.Initializing;
+            
             var newIndex = Mathf.Clamp(initIndex, 0, tabs.Count - 1);
             if (newIndex != initIndex)
             {
@@ -187,12 +189,12 @@ namespace WWFramework
         private async UniTask SwitchTab()
         {
             // 标签切换函数同一时间只能最多有一个在执行
-            if (_isTabSwitching)
+            if (State == ETabGroupState.Switching)
             {
                 return;
             }
             
-            _isTabSwitching = true;
+            State = ETabGroupState.Switching;
             
             // 有新的标签需要展示
             if (null != _newTabs)
@@ -261,11 +263,11 @@ namespace WWFramework
                 // 更新当前标签下标
                 CurrentIndex = newIndex;
                 // 递归查看标签是否进行了切换
-                _isTabSwitching = false;
+                State = ETabGroupState.Showing;
                 await SwitchTab();
             }
-            
-            _isTabSwitching = false;
+
+            State = ETabGroupState.Showing;
         }
     }
 }

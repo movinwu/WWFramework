@@ -1,4 +1,4 @@
 {
 	"name": "WWFramework.Editor",
-	"references":[ "WWFramework.Runtime" ]
+	"references":[ "WWFramework.Runtime", "UniTask" ]
 }

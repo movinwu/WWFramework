@@ -21,17 +21,17 @@ namespace WWFramework
         /// <summary>
         /// 标签索引,用于排序
         /// </summary>
-        int Index { get; internal set; }
+        int Index { get; set; }
         
         /// <summary>
         /// 标签内容
         /// </summary>
-        ITabContent Content { get; internal set; }
+        ITabContent Content { get; set; }
         
         /// <summary>
         /// 标签组
         /// </summary>
-        TabGroup Group { get; internal set; }
+        TabGroup Group { get; set; }
 
         /// <summary>
         /// 异步创建标签内容

@@ -40,5 +40,10 @@ namespace WWFramework
         /// 网络配置名称
         /// </summary>
         public const string NetworkConfigName = "NetworkConfig";
+
+        /// <summary>
+        /// 全局编辑器窗口路径
+        /// </summary>
+        public const string GlobalEditorWindow = "WWFramework/GlobalEditorWindow";
     }
 }

@@ -30,5 +30,10 @@ namespace WWFramework
         /// 网络配置
         /// </summary>
         public const int NetworkConfig = 4;
+        
+        /// <summary>
+        /// 全局编辑器窗口
+        /// </summary>
+        public const int GlobalEditorWindow = 5;
     }
 }

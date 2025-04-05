@@ -17,7 +17,7 @@ namespace WWFramework
         /// <summary>
         /// 标签
         /// </summary>
-        ITab Tab { get; internal set; }
+        ITab Tab { get; set; }
 
         /// <summary>
         /// 初始化
