@@ -13,7 +13,7 @@ namespace WWFramework
     /// </summary>
     public abstract class GlobalEditorTabBase : ITab
     {
-        public string Name { get; set; }
+        public abstract string Name { get; }
         public int Index { get; set; }
         public ITabContent Content { get; set; }
         public TabGroup Group { get; set; }

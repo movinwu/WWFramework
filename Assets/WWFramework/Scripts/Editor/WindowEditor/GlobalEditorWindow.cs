@@ -30,8 +30,22 @@ namespace WWFramework
             new ResourcesTab(),
             new ResourcesTab(),
             new ResourcesTab(),
+            new ResourcesTab(),
+            new ResourcesTab(),
+            new ResourcesTab(),
+            new ResourcesTab(),
         };
         
+        /// <summary>
+        /// 滚动视图位置
+        /// </summary>
+        private Vector2 _scrollPosition;
+        
+        /// <summary>
+        /// 存储页签名称的键
+        /// </summary>
+        private const string LastTabNameKey = "GlobalEditorWindow_LastTabName";
+
         // 添加菜单项
         [MenuItem(
             GlobalEditorStringDefine.GlobalEditorWindow, 
@@ -46,7 +60,23 @@ namespace WWFramework
 
         private void Init()
         {
-            _tabGroup.Init(_tabs.SelectList(x => (ITab)x), 0).Forget();
+            // 检验页签列表
+            if (null == _tabs || _tabs.Count == 0)
+            {
+                Log.LogWarning(sb =>
+                {
+                    sb.AppendLine("全局编辑器页签列表为空,请先添加页签");
+                });
+                return;
+            }
+            
+            // 读取上次存储的页签名称
+            string lastTabName = EditorPrefs.GetString(LastTabNameKey, _tabs[0].Name);
+            
+            // 找到对应的页签下标
+            int lastTabIndex = _tabs.FindIndex(tab => tab.Name == lastTabName);
+
+            _tabGroup.Init(_tabs.SelectList(x => (ITab)x), lastTabIndex).Forget();
         }
 
         private void OnGUI()
@@ -73,6 +103,9 @@ namespace WWFramework
         {
             EditorGUILayout.BeginVertical(GUILayout.Width(150), GUILayout.ExpandHeight(true));
             var curTab = _tabs[_tabGroup.CurrentIndex];
+            
+            // 添加滚动视图
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.ExpandHeight(true));
             for (int i = 0; i < _tabs.Count; i++)
             {
                 var tab = _tabs[i];
@@ -84,10 +117,13 @@ namespace WWFramework
                 if (GUILayout.Button(_tabs[i].Name, GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true)))
                 {
                     _tabGroup.SwitchTab(i).Forget();
+                    // 保存当前页签名称
+                    EditorPrefs.SetString(LastTabNameKey, _tabs[i].Name);
                 }
                 tab.OnGUI(isSelected);
                 EditorGUILayout.EndVertical();
             }
+            EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
 

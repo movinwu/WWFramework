@@ -14,6 +14,8 @@ namespace WWFramework
     /// </summary>
     public class ResourcesTab : GlobalEditorTabBase
     {
+        public override string Name => "资源";
+        
         public override UniTask<ITabContent> CreateContent()
         {
             ITabContent content = new ResourcesTabContent();
@@ -22,7 +24,6 @@ namespace WWFramework
 
         public override UniTask OnInit()
         {
-            Name = "资源";
             return UniTask.CompletedTask;
         }
 
