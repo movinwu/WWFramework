@@ -1,19 +1,25 @@
 /*------------------------------
- * 脚本名称: ResourcesTabContent
+ * 脚本名称: AssetBundleBuildTab
  * 创建者: movin
  * 创建日期: 2025/04/05
 ------------------------------*/
 
 using Cysharp.Threading.Tasks;
-using UnityEngine;
 
 namespace WWFramework
 {
     /// <summary>
-    /// 资源页签内容
+    /// AB构建页签
     /// </summary>
-    public class ResourcesTabContent : GlobalEditorTabContentBase
+    public class AssetBundleBuildTab : GlobalEditorTabBase
     {
+        public override string Name => "AB构建策略";
+        
+        public override UniTask<ITabContent> CreateContent()
+        {
+            return UniTask.FromResult<ITabContent>(new AssetBundleBuildTabContent());
+        }
+
         public override UniTask OnInit()
         {
             return UniTask.CompletedTask;
@@ -22,11 +28,6 @@ namespace WWFramework
         public override UniTask OnDestroy()
         {
             return UniTask.CompletedTask;
-        }
-        
-        public override void OnGUI()
-        {
-            GUILayout.Label("资源页签内容");
         }
     }
 }

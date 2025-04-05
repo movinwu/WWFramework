@@ -19,7 +19,8 @@ namespace WWFramework
 
         public static List<TResult> SelectList<TSource, TResult>(
             this List<TSource> source,
-            Func<TSource, TResult> selector)
+            Func<TSource, TResult> selector,
+            Func<TSource, TResult, bool> predicate = null)
         {
             if (ReferenceEquals(source, null))
             {
@@ -32,15 +33,30 @@ namespace WWFramework
             }
             
             List<TResult> result = new List<TResult>(source.Count);
-            
-            source.ForEach(item => { result.Add(ReferenceEquals(item, null) ? default(TResult) : selector(item)); });
+
+            if (null == predicate)
+            {
+                source.ForEach(item => { result.Add(ReferenceEquals(item, null) ? default(TResult) : selector(item)); });
+            }
+            else
+            {
+                source.ForEach(item =>
+                {
+                    var tResult = ReferenceEquals(item, null) ? default(TResult) : selector(item);
+                    if (predicate(item, tResult))
+                    {
+                        result.Add(tResult); 
+                    }
+                });
+            }
 
             return result;
         }
         
         public static List<TResult> SelectList<TSource, TResult>(
             this TSource[] source,
-            Func<TSource, TResult> selector)
+            Func<TSource, TResult> selector,
+            Func<TSource, TResult, bool> predicate = null)
         {
             if (ReferenceEquals(source, null))
             {
@@ -53,15 +69,30 @@ namespace WWFramework
             }
             
             List<TResult> result = new List<TResult>(source.Length);
-            
-            source.ForEach(item => { result.Add(ReferenceEquals(item, null) ? default(TResult) : selector(item)); });
+
+            if (null == predicate)
+            {
+                source.ForEach(item => { result.Add(ReferenceEquals(item, null) ? default(TResult) : selector(item)); });
+            }
+            else
+            {
+                source.ForEach(item =>
+                {
+                    var tResult = ReferenceEquals(item, null) ? default(TResult) : selector(item);
+                    if (predicate(item, tResult))
+                    {
+                        result.Add(tResult); 
+                    }
+                });
+            }
 
             return result;
         }
         
         public static TResult[] SelectArray<TSource, TResult>(
             this List<TSource> source,
-            Func<TSource, TResult> selector)
+            Func<TSource, TResult> selector,
+            Func<TSource, TResult, bool> predicate = null)
         {
             if (ReferenceEquals(source, null))
             {
@@ -72,7 +103,7 @@ namespace WWFramework
             {
                 throw new ArgumentNullException("selector is null");
             }
-            
+
             TResult[] result = new TResult[source.Count];
 
             for (int i = 0; i < source.Count; i++)
@@ -81,12 +112,38 @@ namespace WWFramework
                 result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
             }
 
+            if (null != predicate)
+            {
+                int count = 0;
+                bool[] predicateResult = new bool[source.Count];
+                for (int i = 0; i < source.Count; i++)
+                {
+                    predicateResult[i] = predicate(source[i], result[i]);
+                    if (predicateResult[i])
+                    {
+                        count++;
+                    }
+                }
+
+                var oldResult = result;
+                result = new TResult[count];
+                count = 0;
+                for (int i = 0; i < source.Count; i++)
+                {
+                    if (predicateResult[i])
+                    {
+                        result[count++] = oldResult[i];
+                    }
+                }
+            }
+
             return result;
         }
         
         public static TResult[] SelectArray<TSource, TResult>(
             this TSource[] source,
-            Func<TSource, TResult> selector)
+            Func<TSource, TResult> selector,
+            Func<TSource, TResult, bool> predicate = null)
         {
             if (ReferenceEquals(source, null))
             {
@@ -104,6 +161,31 @@ namespace WWFramework
             {
                 var item = source[i];
                 result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
+            }
+
+            if (null != predicate)
+            {
+                int count = 0;
+                bool[] predicateResult = new bool[source.Length];
+                for (int i = 0; i < source.Length; i++)
+                {
+                    predicateResult[i] = predicate(source[i], result[i]);
+                    if (predicateResult[i])
+                    {
+                        count++;
+                    }
+                }
+
+                var oldResult = result;
+                result = new TResult[count];
+                count = 0;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    if (predicateResult[i])
+                    {
+                        result[count++] = oldResult[i];
+                    }
+                }
             }
 
             return result;

@@ -19,21 +19,14 @@ namespace WWFramework
         /// <summary>
         /// 全局标签组
         /// </summary>
-        private TabGroup _tabGroup = new TabGroup();
+        private readonly TabGroup _tabGroup = new TabGroup();
         
         /// <summary>
         /// 所有页签
         /// </summary>
-        private List<GlobalEditorTabBase> _tabs = new List<GlobalEditorTabBase>()
+        private readonly List<GlobalEditorTabBase> _tabs = new List<GlobalEditorTabBase>()
         {
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
-            new ResourcesTab(),
+            new AssetBundleBuildTab(),
         };
         
         /// <summary>

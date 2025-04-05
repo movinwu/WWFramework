@@ -14,12 +14,12 @@ namespace WWFramework
         /// <summary>
         /// 通用脚本模板路径
         /// </summary>
-        public const string CommonScriptTemplate = "Assets/Create/NewCommonScript";
+        public const string CommonScriptTemplate = "Assets/Create/NewScript/NewCommonScript";
         
         /// <summary>
         /// WWFramework脚本模板路径
         /// </summary>
-        public const string WWFrameworkScriptTemplate = "Assets/Create/NewWWFrameworkScript";
+        public const string WWFrameworkScriptTemplate = "Assets/Create/NewScript/NewWWFrameworkScript";
 
         /// <summary>
         /// 全局游戏配置路径
@@ -40,6 +40,21 @@ namespace WWFramework
         /// 网络配置名称
         /// </summary>
         public const string NetworkConfigName = "NetworkConfig";
+        
+        /// <summary>
+        /// AB 构建配置路径
+        /// </summary>
+        public const string AssetBundleBuildConfig = "ScriptableObject/AssetBundleBuildConfig";
+
+        /// <summary>
+        /// AB 构建配置名称
+        /// </summary>
+        public const string AssetBundleBuildConfigName = "AssetBundleBuildConfig";
+        
+        /// <summary>
+        /// AB 构建配置文件夹路径
+        /// </summary>
+        public const string AssetBundleBuildConfigFolderPath = "Assets/WWFramework/Scripts/Editor/WindowEditor/AssetBundleBuild/AssetBundleBuildConfig";
 
         /// <summary>
         /// 全局编辑器窗口路径
