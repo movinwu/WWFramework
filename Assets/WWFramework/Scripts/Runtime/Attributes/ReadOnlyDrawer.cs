@@ -16,11 +16,20 @@ namespace WWFramework
     [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
     public class ReadOnlyDrawer : PropertyDrawer
     {
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // 禁用GUI，使字段变为只读
             GUI.enabled = false;
+            int indent = EditorGUI.indentLevel;
+            EditorGUI.indentLevel = 0;
+    
             EditorGUI.PropertyField(position, property, label, true);
+    
+            EditorGUI.indentLevel = indent;
             GUI.enabled = true;
         }
     }

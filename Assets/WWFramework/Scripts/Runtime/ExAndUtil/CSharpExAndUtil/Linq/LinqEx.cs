@@ -195,6 +195,62 @@ namespace WWFramework
 
         #region Foreach
         
+        /// <summary>
+        /// 遍历跳出
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="action">遍历函数,返回是否跳出遍历</param>
+        /// <typeparam name="TSource"></typeparam>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static void BreakForEach<TSource>(this List<TSource> source, Func<TSource, bool> action)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source array is null");
+            }
+        
+            if (ReferenceEquals(action, null))
+            {
+                throw new ArgumentNullException("action is null");
+            }
+            
+            for (int i = 0; i < source.Count; i++)
+            {
+                if (action(source[i]))
+                {
+                    break;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 遍历跳出
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="action">遍历函数,返回是否跳出遍历</param>
+        /// <typeparam name="TSource"></typeparam>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static void BreakForEach<TSource>(this TSource[] source, Func<TSource, bool> action)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source array is null");
+            }
+        
+            if (ReferenceEquals(action, null))
+            {
+                throw new ArgumentNullException("action is null");
+            }
+            
+            for (int i = 0; i < source.Length; i++)
+            {
+                if (action(source[i]))
+                {
+                    break;
+                }
+            }
+        }
+        
         public static void ForEach<TSource>(this TSource[] source, Action<TSource> action)
         {
             if (ReferenceEquals(source, null))
@@ -461,5 +517,55 @@ namespace WWFramework
         }
 
         #endregion Except
+
+        #region Contains
+        
+        public static bool Contains<TSource>(
+            this TSource[] source,
+            Func<TSource, bool> predicate)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source list is null");
+            }
+
+            if (ReferenceEquals(predicate, null))
+            {
+                throw new ArgumentNullException("selector is null");
+            }
+
+            bool contains = false;
+            source.BreakForEach(item =>
+            {
+                contains = predicate(item);
+                return contains;
+            });
+            return contains;
+        }
+        
+        public static bool Contains<TSource>(
+            this List<TSource> source,
+            Func<TSource, bool> predicate)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source list is null");
+            }
+
+            if (ReferenceEquals(predicate, null))
+            {
+                throw new ArgumentNullException("selector is null");
+            }
+
+            bool contains = false;
+            source.BreakForEach(item =>
+            {
+                contains = predicate(item);
+                return contains;
+            });
+            return contains;
+        }
+
+        #endregion Contains
     }
 }

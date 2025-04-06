@@ -20,7 +20,7 @@ namespace WWFramework
         /// <summary>
         /// GUI函数调用
         /// </summary>
-        public abstract void OnGUI();
+        public abstract void OnDrawGUI();
 
         public virtual UniTask OnShow()
         {

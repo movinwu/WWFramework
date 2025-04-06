@@ -54,7 +54,7 @@ namespace WWFramework
         /// <summary>
         /// AB 构建配置文件夹路径
         /// </summary>
-        public const string AssetBundleBuildConfigFolderPath = "Assets/WWFramework/Scripts/Editor/WindowEditor/AssetBundleBuild/AssetBundleBuildConfig";
+        public const string AssetBundleBuildConfigFolderPath = "Assets/WWFramework/Scripts/Editor/WindowEditor/AssetBundleBuild/AssetBundleBuildConfig/Configs";
 
         /// <summary>
         /// 全局编辑器窗口路径

@@ -66,7 +66,7 @@ namespace WWFramework
             return UniTask.CompletedTask;
         }
 
-        public override void OnGUI()
+        public override void OnDrawGUI()
         {
             GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             // 第一行：创建配置区域
@@ -76,12 +76,39 @@ namespace WWFramework
             // 文本输入框
             _newConfigName = EditorGUILayout.TextField(_newConfigName, GUILayout.Width(200));
             // 创建按钮
-            if (GUILayout.Button("新建配置", GUILayout.Width(120)))
+            if (GUILayout.Button("+", GUILayout.Width(50)))
+            {
+                AddTab();
+            }
+            if (GUILayout.Button("-", GUILayout.Width(50)))
+            {
+                RemoveTab();
+            }
+            GUILayout.EndHorizontal();
+
+            // 有配置文件且页签组已经初始化后再绘制页签
+            if (_configTabs.Count != 0
+                && (_tabGroup.State == ETabGroupState.Showing
+                    || _tabGroup.State == ETabGroupState.Switching))
+            {
+                DrawTabs();
+                
+                DrawSelectedTabContent();
+            }
+            
+            GUILayout.EndVertical();
+            
+            void AddTab()
             {
                 if (string.IsNullOrEmpty(_newConfigName))
                 {
                     // 弹窗提示
                     EditorUtility.DisplayDialog("错误", "请输入配置名称", "确定");
+                }
+                else if (_configTabs.Contains(x => x.Name == _newConfigName))
+                {
+                    // 弹窗提示
+                    EditorUtility.DisplayDialog("错误", "配置名称已存在", "确定");
                 }
                 else
                 {
@@ -100,19 +127,27 @@ namespace WWFramework
                     EditorPrefs.SetString(LastTabNameKey, _configTabs[^1].Name);
                 }
             }
-            GUILayout.EndHorizontal();
-
-            // 有配置文件且页签组已经初始化后再绘制页签
-            if (_configTabs.Count != 0
-                && (_tabGroup.State == ETabGroupState.Showing
-                    || _tabGroup.State == ETabGroupState.Switching))
-            {
-                DrawTabs();
-                
-                DrawSelectedTabContent();
-            }
             
-            GUILayout.EndVertical();
+            void RemoveTab()
+            {
+                if (_tabGroup.State != ETabGroupState.Showing
+                    || _tabGroup.CurrentIndex < 0 
+                    || _tabGroup.CurrentIndex >= _configTabs.Count)
+                {
+                    return;
+                }
+                // 删除页签对应配置
+                AssetDatabase.DeleteAsset($"{GlobalEditorStringDefine.AssetBundleBuildConfigFolderPath}/{_configTabs[_tabGroup.CurrentIndex].Name}.asset");
+                AssetDatabase.Refresh();
+                _configTabs.RemoveAt(_tabGroup.CurrentIndex);
+                if (_configTabs.Count > 0)
+                {
+                    var index = Mathf.Clamp(_tabGroup.CurrentIndex, 0, _configTabs.Count - 1);
+                    _tabGroup.Init(_configTabs, index).Forget();
+                    // 保存当前页签名称
+                    EditorPrefs.SetString(LastTabNameKey, _configTabs[index].Name);
+                }
+            }
         }
 
         /// <summary>
@@ -121,7 +156,7 @@ namespace WWFramework
         private void DrawTabs()
         {
             // 第二行：Tab页签滚动区域
-            EditorGUILayout.BeginHorizontal(GUILayout.Height(50), GUILayout.ExpandWidth(true));
+            EditorGUILayout.BeginHorizontal(GUILayout.Height(20), GUILayout.ExpandWidth(true));
             var curTab = _configTabs[_tabGroup.CurrentIndex];
             
             // 添加滚动视图
@@ -162,25 +197,6 @@ namespace WWFramework
                 && _configTabs[_tabGroup.CurrentIndex] is AssetBundleBuildConfigTab content)
             {
                 content.Config.OnDrawGUI(this);
-            }
-        }
-
-        /// <summary>
-        /// 移除页签
-        /// </summary>
-        /// <param name="tab"></param>
-        public void RemoveTab()
-        {
-            // 删除页签对应配置
-            AssetDatabase.DeleteAsset($"{GlobalEditorStringDefine.AssetBundleBuildConfigFolderPath}/{_configTabs[_tabGroup.CurrentIndex].Name}.asset");
-            AssetDatabase.Refresh();
-            _configTabs.RemoveAt(_tabGroup.CurrentIndex);
-            if (_configTabs.Count > 0)
-            {
-                var index = Mathf.Clamp(_tabGroup.CurrentIndex, 0, _configTabs.Count - 1);
-                _tabGroup.Init(_configTabs, index).Forget();
-                // 保存当前页签名称
-                EditorPrefs.SetString(LastTabNameKey, _configTabs[index].Name);
             }
         }
 

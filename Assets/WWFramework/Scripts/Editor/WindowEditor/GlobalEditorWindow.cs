@@ -127,7 +127,7 @@ namespace WWFramework
             var curTab = _tabs[_tabGroup.CurrentIndex];
             if (curTab.Content is GlobalEditorTabContentBase content)
             {
-                content.OnGUI();
+                content.OnDrawGUI();
             }
             EditorGUILayout.EndVertical();
         }
