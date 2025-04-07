@@ -16,7 +16,7 @@ namespace WWFramework
         /// <summary>
         /// 资源包构建配置
         /// </summary>
-        public const int AssetBundleBuildConfig = 1;
+        public const int AssetBundleInfoConfig = 1;
 
         /// <summary>
         /// 全局游戏配置

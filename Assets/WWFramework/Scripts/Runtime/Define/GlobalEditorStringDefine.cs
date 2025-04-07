@@ -44,17 +44,17 @@ namespace WWFramework
         /// <summary>
         /// AB 构建配置路径
         /// </summary>
-        public const string AssetBundleBuildConfig = "ScriptableObject/AssetBundleBuildConfig";
+        public const string AssetBundleInfoConfig = "ScriptableObject/AssetBundleInfoConfig";
 
         /// <summary>
         /// AB 构建配置名称
         /// </summary>
-        public const string AssetBundleBuildConfigName = "AssetBundleBuildConfig";
+        public const string AssetBundleInfoConfigName = "AssetBundleInfoConfig";
         
         /// <summary>
         /// AB 构建配置文件夹路径
         /// </summary>
-        public const string AssetBundleBuildConfigFolderPath = "Assets/WWFramework/Scripts/Editor/WindowEditor/AssetBundleBuild/AssetBundleBuildConfig/Configs";
+        public const string AssetBundleInfoConfigFolderPath = "Assets/WWFramework/Scripts/Editor/WindowEditor/AssetBundleInfo/AssetBundleInfoConfig/Configs";
 
         /// <summary>
         /// 全局编辑器窗口路径

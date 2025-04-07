@@ -26,7 +26,7 @@ namespace WWFramework
         /// </summary>
         private readonly List<GlobalEditorTabBase> _tabs = new List<GlobalEditorTabBase>()
         {
-            new AssetBundleBuildTab(),
+            new AssetBundleInfoTab(),
         };
         
         /// <summary>

@@ -20,7 +20,7 @@ namespace WWFramework
         /// <typeparam name="T">栈元素类型</typeparam>
         /// <param name="stack">栈</param>
         /// <param name="collection">要添加到栈中的集合</param>
-        public static void EnqueueRange<T>(this Stack<T> stack, IEnumerable<T> collection)
+        public static void PushRange<T>(this Stack<T> stack, IEnumerable<T> collection)
         {
             foreach (T item in collection)
             {
