@@ -25,7 +25,7 @@ namespace WWFramework
             return UniTask.CompletedTask;
         }
 
-        public override UniTask OnDestroy()
+        public override UniTask OnRelease()
         {
             return UniTask.CompletedTask;
         }

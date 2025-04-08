@@ -46,6 +46,6 @@ namespace WWFramework
             return UniTask.CompletedTask;
         }
 
-        public abstract UniTask OnDestroy();
+        public abstract UniTask OnRelease();
     }
 }

@@ -211,8 +211,8 @@ namespace WWFramework
                 for (int i = 0; i < _tabs.Count; i++)
                 {
                     var tab = _tabs[i];
-                    destroyTasks[i * 2] = tab.OnDestroy();
-                    destroyTasks[i * 2 + 1] = tab.Content?.OnDestroy() ?? UniTask.CompletedTask;
+                    destroyTasks[i * 2] = tab.OnRelease();
+                    destroyTasks[i * 2 + 1] = tab.Content?.OnRelease() ?? UniTask.CompletedTask;
                 }
                 // 初始化新标签和旧标签销毁同时进行
                 for (int i = 0; i < _newTabs.Count; i++)

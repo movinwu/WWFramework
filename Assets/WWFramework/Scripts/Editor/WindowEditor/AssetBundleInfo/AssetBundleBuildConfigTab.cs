@@ -53,7 +53,7 @@ namespace WWFramework
             return UniTask.CompletedTask;
         }
 
-        public UniTask OnDestroy()
+        public UniTask OnRelease()
         {
             return UniTask.CompletedTask;
         }

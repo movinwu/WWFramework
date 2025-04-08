@@ -67,6 +67,6 @@ namespace WWFramework
         /// 异步销毁
         /// </summary>
         /// <returns></returns>
-        UniTask OnDestroy();
+        UniTask OnRelease();
     }
 }
