@@ -4,6 +4,7 @@
  * 创建日期: 2025/04/05
 ------------------------------*/
 
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
@@ -238,7 +239,7 @@ namespace WWFramework
             // 打包按钮
             if (GUILayout.Button("打包资源"))
             {
-                AssetBundleBuild();
+                AssetBundleBuild().Forget();
             }
             
             GUILayout.EndVertical();
@@ -265,9 +266,51 @@ namespace WWFramework
         /// <summary>
         /// 构建ab包
         /// </summary>
-        public void AssetBundleBuild()
+        public async UniTaskVoid AssetBundleBuild()
         {
-            // TODO 打包
+            // 打包使用顺序流程执行
+            var buildProcedure = new SequenceProcedure();
+            // 检查相关参数
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureCheck(this));
+            // 数据表等重新生成
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureDataTable(this));
+            // 清理原有打包信息
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureClear(this));
+            // 相关文件夹检查
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureFolder(this));
+            // 相关文件检查
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureFile(this));
+            // shader收集及shader变体生成
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureShader(this));
+            // 收集所有要打包文件信息
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureInfoCollect(this));
+            // 分析所有要打包文件信息
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureInfoAnalyze(this));
+            // 正式打包
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureBuild(this));
+            // 打包后处理
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedurePostProcess(this));
+            // 本地文件拷贝
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureLocalFile(this));
+            // 远端文件拷贝
+            buildProcedure.AddProcedure(new AssetBundleBuildProcedureRemoteFile(this));
+            
+            // 正式执行
+            try
+            {
+                await buildProcedure.Execute();
+            }
+            catch (Exception e)
+            {
+                Log.LogError(x =>
+                {
+                    x.Append("打包出错, 当前打包流程:");
+                    x.Append(buildProcedure.CurrentExecutingProcedure.GetType());
+                    x.Append("错误信息:");
+                    x.Append(e.Message);
+                    x.Append(e.StackTrace);
+                });
+            }
         }
     }
 }
