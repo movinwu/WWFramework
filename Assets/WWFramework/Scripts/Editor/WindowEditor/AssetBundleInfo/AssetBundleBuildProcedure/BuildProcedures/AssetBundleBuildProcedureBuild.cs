@@ -4,7 +4,8 @@
  * 创建日期: 2025/04/09
 ------------------------------*/
 
-using UnityEngine;
+using Cysharp.Threading.Tasks;
+using UnityEditor;
 
 namespace WWFramework
 {
@@ -15,6 +16,13 @@ namespace WWFramework
     {
         public AssetBundleBuildProcedureBuild(AssetBundleInfoConfig config) : base(config)
         {
+        }
+
+        protected override async UniTask DoExecute()
+        {
+            Config.AssetBundleManifest = BuildPipeline.BuildAssetBundles(Config.OriginalBuildOutputDir, Config.Analyzer.GetBuildArray(Config.analyzeLimit), Config.option, Config.target);
+            // 等待直到打包完成
+            await UniTask.WaitUntil(() => !EditorApplication.isCompiling);
         }
     }
 }

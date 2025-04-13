@@ -14,10 +14,16 @@ namespace WWFramework
     public enum ECollectorInfoType
     {
         /// <summary>
-        /// 整个文件夹打成一个AB包
+        /// 整个文件夹打成一个AB包,文件参与冗余分析
         /// </summary>
-        [InspectorName("整个文件夹打成一个AB包")]
-        WholeFolder,
+        [InspectorName("整个文件夹打成一个AB包,文件参与冗余分析")]
+        WholeFolderWithAnalyze,
+        
+        /// <summary>
+        /// 整个文件夹打成一个AB包,文件不参与冗余分析
+        /// </summary>
+        [InspectorName("整个文件夹打成一个AB包,文件不参与冗余分析")]
+        WholeFolderWithoutAnalyze,
         
         /// <summary>
         /// 每个文件单独ab包

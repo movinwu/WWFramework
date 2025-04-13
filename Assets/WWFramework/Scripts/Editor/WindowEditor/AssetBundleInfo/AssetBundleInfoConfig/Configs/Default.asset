@@ -14,8 +14,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   target: 13
   option: 256
-  outputDir: 
-  fileCollectors: []
-  versionType: 0
-  version: 0.1
-  lastVersion: 
+  outputDir: D:/UnityProjects/WWFramework/Output
+  fileCollectors:
+  - folderPath: Assets/Res/TestRes/Audio
+    ignorePattern: 
+    infoType: 0
+    fileExtensions: wav
+    collectedFiles:
+    - Assets/Res/TestRes/Audio/music_a.wav
+    - Assets/Res/TestRes/Audio/sound_a.wav
+    - Assets/Res/TestRes/Audio/sound_b.wav
+  - folderPath: Assets/Res/TestRes/Image
+    ignorePattern: 
+    infoType: 0
+    fileExtensions: png
+    collectedFiles:
+    - Assets/Res/TestRes/Image/image_a.png
+    - Assets/Res/TestRes/Image/image_b.png
+  - folderPath: Assets/Res/TestRes/Panel
+    ignorePattern: 
+    infoType: 2
+    fileExtensions: prefab
+    collectedFiles:
+    - Assets/Res/TestRes/Panel/panel_a.prefab
+    - Assets/Res/TestRes/Panel/panel_b.prefab
+    - Assets/Res/TestRes/Panel/panel_canvas.prefab
+  - folderPath: Assets/Res/TestRes/Prefab
+    ignorePattern: 
+    infoType: 2
+    fileExtensions: prefab
+    collectedFiles:
+    - Assets/Res/TestRes/Prefab/prefab_a.prefab
+    - Assets/Res/TestRes/Prefab/prefab_b.prefab
+    - Assets/Res/TestRes/Prefab/prefab_c.prefab
+  - folderPath: Assets/Res/TestRes/RawFiles
+    ignorePattern: 
+    infoType: 0
+    fileExtensions: txt
+    collectedFiles:
+    - Assets/Res/TestRes/RawFiles/raw_file_a.txt
+    - Assets/Res/TestRes/RawFiles/raw_file_b.txt
+    - Assets/Res/TestRes/RawFiles/raw_file_c.txt
+  - folderPath: Assets/Res/TestRes/Sprites
+    ignorePattern: 
+    infoType: 0
+    fileExtensions: png
+    collectedFiles:
+    - Assets/Res/TestRes/Sprites/bullet.png
+    - Assets/Res/TestRes/Sprites/pause.png
+    - Assets/Res/TestRes/Sprites/rocket.png
+  versionType: 1
+  specificVersion: 0.1
+  lastVersion: 0.5
+  copyToStreamingAssets: 0
+  uploadRemoteUrl: 
+  analyze: 1
+  analyzeLimit: 1
+  AssetBundleManifest: {fileID: 0}

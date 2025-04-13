@@ -1,4 +1,19 @@
 {
-	"name": "WWFramework.Editor",
-	"references":[ "WWFramework.Runtime", "UniTask" ]
+    "name": "WWFramework.Editor",
+    "rootNamespace": "",
+    "references": [
+        "WWFramework.Runtime",
+        "UniTask"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

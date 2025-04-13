@@ -4,6 +4,7 @@
  * 创建日期: 2025/04/09
 ------------------------------*/
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace WWFramework
@@ -15,6 +16,12 @@ namespace WWFramework
     {
         public AssetBundleBuildProcedureInfoCollect(AssetBundleInfoConfig config) : base(config)
         {
+        }
+
+        protected override UniTask DoExecute()
+        {
+            Config.Analyzer = new AssetBundleBuildAnalyzer(Config.fileCollectors);
+            return base.DoExecute();
         }
     }
 }

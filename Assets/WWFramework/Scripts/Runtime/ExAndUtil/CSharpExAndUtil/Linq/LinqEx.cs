@@ -106,14 +106,14 @@ namespace WWFramework
 
             TResult[] result = new TResult[source.Count];
 
-            for (int i = 0; i < source.Count; i++)
-            {
-                var item = source[i];
-                result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
-            }
-
             if (null != predicate)
             {
+                for (int i = 0; i < source.Count; i++)
+                {
+                    var item = source[i];
+                    result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
+                }
+
                 int count = 0;
                 bool[] predicateResult = new bool[source.Count];
                 for (int i = 0; i < source.Count; i++)
@@ -134,6 +134,30 @@ namespace WWFramework
                     {
                         result[count++] = oldResult[i];
                     }
+                }
+            }
+            else
+            {
+                int count = 0;
+                for (int i = 0; i < source.Count; i++)
+                {
+                    var item = source[i];
+                    if (!ReferenceEquals(item, null))
+                    {
+                        var resultItem = selector(item);
+                        if (!ReferenceEquals(resultItem, null))
+                        {
+                            result[count++] = resultItem;
+                        }
+                    }
+                }
+
+                var oldResult = result;
+                result = new TResult[count];
+                count = 0;
+                for (int i = 0; i < result.Length; i++)
+                {
+                    result[count++] = oldResult[i];
                 }
             }
 
@@ -157,14 +181,14 @@ namespace WWFramework
             
             TResult[] result = new TResult[source.Length];
 
-            for (int i = 0; i < source.Length; i++)
-            {
-                var item = source[i];
-                result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
-            }
-
             if (null != predicate)
             {
+                for (int i = 0; i < source.Length; i++)
+                {
+                    var item = source[i];
+                    result[i] = ReferenceEquals(item, null) ? default(TResult) : selector(item);
+                }
+
                 int count = 0;
                 bool[] predicateResult = new bool[source.Length];
                 for (int i = 0; i < source.Length; i++)
@@ -187,11 +211,81 @@ namespace WWFramework
                     }
                 }
             }
+            else
+            {
+                int count = 0;
+                for (int i = 0; i < source.Length; i++)
+                {
+                    var item = source[i];
+                    if (!ReferenceEquals(item, null))
+                    {
+                        var resultItem = selector(item);
+                        if (!ReferenceEquals(resultItem, null))
+                        {
+                            result[count++] = resultItem;
+                        }
+                    }
+                }
+
+                var oldResult = result;
+                result = new TResult[count];
+                count = 0;
+                for (int i = 0; i < result.Length; i++)
+                {
+                    result[count++] = oldResult[i];
+                }
+            }
 
             return result;
         }
 
         #endregion Select
+        
+        #region SelectMany
+
+        public static List<TResult> SelectManyList<TSource, TResult>(
+            this List<TSource> source,
+            Action<TSource, List<TResult>> selector)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source list is null");
+            }
+
+            if (ReferenceEquals(selector, null))
+            {
+                throw new ArgumentNullException("selector is null");
+            }
+            
+            List<TResult> result = new List<TResult>(source.Count);
+
+            source.ForEach(item => selector(item, result));
+
+            return result;
+        }
+        
+        public static List<TResult> SelectManyList<TSource, TResult>(
+            this TSource[] source,
+            Action<TSource, List<TResult>> selector)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                throw new ArgumentNullException("source array is null");
+            }
+
+            if (ReferenceEquals(selector, null))
+            {
+                throw new ArgumentNullException("selector is null");
+            }
+            
+            List<TResult> result = new List<TResult>(source.Length);
+
+            source.ForEach(item => selector(item, result));
+
+            return result;
+        }
+
+        #endregion SelectMany
 
         #region Foreach
         
