@@ -24,8 +24,8 @@ namespace WWFramework
         protected override UniTask DoExecute()
         {
             // 根据清单文件生成文件信息字符串,保存在文档中
-            var allBundles = Config.AssetBundleManifest.GetAllAssetBundles()
-                .SelectList(x => $"{x};{Config.AssetBundleManifest.GetAssetBundleHash(x).ToString()}");
+            var allBundles = Config.assetBundleManifest.GetAllAssetBundles()
+                .SelectList(x => $"{x};{Config.assetBundleManifest.GetAssetBundleHash(x).ToString()}");
             StringBuilder sb = new StringBuilder();
             allBundles.ForEach(x => sb.AppendLine(x));
             var fileName = Path.Combine(Config.BuildOutputDir, Config.Version.Replace(".", "_"));

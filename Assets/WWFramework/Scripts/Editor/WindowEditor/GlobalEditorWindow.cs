@@ -4,6 +4,7 @@
  * 创建日期: 2025/04/05
 ------------------------------*/
 
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEditor;
@@ -41,14 +42,19 @@ namespace WWFramework
 
         // 添加菜单项
         [MenuItem(
-            GlobalEditorStringDefine.GlobalEditorWindow, 
+            GlobalEditorStringDefine.GlobalEditorWindow + " %#L", 
             priority = GlobalEditorPriorityDefine.GlobalEditorWindow)]
         private static void ShowWindow()
         {
             var window = GetWindow<GlobalEditorWindow>();
             window.titleContent = new GUIContent("Global Editor");
             window.minSize = new Vector2(300, 200);
-            window.Init();
+            // window.Init();
+        }
+
+        private void OnEnable()
+        {
+            Init();
         }
 
         private void Init()

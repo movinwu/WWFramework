@@ -73,6 +73,7 @@ namespace WWFramework
             GUILayout.BeginHorizontal();
             
             GUILayout.FlexibleSpace(); // 将控件推到右侧
+            GUILayout.Label("新配置名称:", GUILayout.Width(70));
             // 文本输入框
             _newConfigName = EditorGUILayout.TextField(_newConfigName, GUILayout.Width(200));
             // 创建按钮

@@ -70,4 +70,5 @@ MonoBehaviour:
   uploadRemoteUrl: 
   analyze: 1
   analyzeLimit: 1
-  AssetBundleManifest: {fileID: 0}
+  extraShaderVariant: []
+  assetBundleManifest: {fileID: 0}

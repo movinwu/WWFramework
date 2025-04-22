@@ -20,7 +20,7 @@ namespace WWFramework
 
         protected override async UniTask DoExecute()
         {
-            Config.AssetBundleManifest = BuildPipeline.BuildAssetBundles(Config.OriginalBuildOutputDir, Config.Analyzer.GetBuildArray(Config.analyzeLimit), Config.option, Config.target);
+            Config.assetBundleManifest = BuildPipeline.BuildAssetBundles(Config.OriginalBuildOutputDir, Config.Analyzer.GetBuildArray(Config.analyzeLimit), Config.option, Config.target);
             // 等待直到打包完成
             await UniTask.WaitUntil(() => !EditorApplication.isCompiling);
         }

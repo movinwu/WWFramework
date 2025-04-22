@@ -88,10 +88,14 @@ namespace WWFramework
         [HideInInspector] public AssetBundleBuildAnalyzer Analyzer;
 
         /// <summary>
+        /// 额外shader变体信息(自动收集shader变体会遗漏的各种变体)
+        /// </summary>
+        [ReadOnly] public List<ShaderVariantInfo> extraShaderVariant = new List<ShaderVariantInfo>();
+
+        /// <summary>
         /// 打包后的包清单文件
         /// </summary>
-        [HideInInspector]
-        public AssetBundleManifest AssetBundleManifest;
+        [HideInInspector] public AssetBundleManifest assetBundleManifest;
 
         /// <summary>
         /// 当前选中的下标
@@ -175,12 +179,13 @@ namespace WWFramework
         /// 构建输出目录(最终文件)
         /// </summary>
         public string FinalBuildOutputDir => $"{BuildOutputDir}/Final";
-        
+
         /// <summary>
         /// StreamingAssets复制目录
         /// </summary>
-        public string StreamingAssetsCopyDir => System.IO.Path.Combine(Application.streamingAssetsPath, target.ToString(), Version).Replace("\\", "/");
-        
+        public string StreamingAssetsCopyDir => System.IO.Path
+            .Combine(Application.streamingAssetsPath, target.ToString(), Version).Replace("\\", "/");
+
         public ITab Tab { get; set; }
 
         public UniTask OnInit()
@@ -216,7 +221,7 @@ namespace WWFramework
             {
                 _defaultOutputDir = $"{Application.dataPath}/../output";
             }
-            
+
             if (_dirty)
             {
                 _dirty = false;
@@ -226,182 +231,286 @@ namespace WWFramework
             }
 
             GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
-            // 整体配置信息使用一个背景区域包裹
-            EditorGUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
             {
-                // 绘制打包平台
-                var newTarget = (BuildTarget)EditorGUILayout.EnumPopup("打包平台", target);
-                if (newTarget != target)
+                // 整体配置信息使用一个背景区域包裹
+                EditorGUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
                 {
-                    target = newTarget;
-                    _dirty = true;
-                }
-
-                // 绘制打包选项
-                var newOption = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("打包选项", option);
-                if (newOption != option)
-                {
-                    option = newOption;
-                    _dirty = true;
-                }
-
-                // 绘制输出目录
-                EditorGUILayout.BeginHorizontal(GUILayout.Height(20), GUILayout.ExpandWidth(true));
-                EditorGUILayout.LabelField("输出目录", GUILayout.Width(150));
-                if (GUILayout.Button(outputDir, GUILayout.ExpandWidth(true)))
-                {
-                    string selectedPath = EditorUtility.OpenFolderPanel("选择输出目录",
-                        Application.dataPath, Application.dataPath);
-                    if (!string.IsNullOrEmpty(selectedPath))
+                    // 绘制打包平台
+                    var newTarget = (BuildTarget)EditorGUILayout.EnumPopup("打包平台", target);
+                    if (newTarget != target)
                     {
-                        // 保存绝对路径
-                        outputDir = selectedPath;
+                        target = newTarget;
                         _dirty = true;
                     }
-                }
 
-                EditorGUILayout.EndHorizontal();
-                // 绘制版本类型
-                var newVersionType = (EAssetBundleVersionType)EditorGUILayout.EnumPopup("版本类型", versionType);
-                if (newVersionType != versionType)
-                {
-                    versionType = newVersionType;
-                    _dirty = true;
-                }
-
-                if (versionType == EAssetBundleVersionType.Specific)
-                {
-                    // 绘制版本号
-                    var newVersion = EditorGUILayout.TextField("版本号", specificVersion);
-                    if (newVersion != specificVersion)
+                    // 绘制打包选项
+                    var newOption = (BuildAssetBundleOptions)EditorGUILayout.EnumFlagsField("打包选项", option);
+                    if (newOption != option)
                     {
-                        specificVersion = newVersion;
+                        option = newOption;
                         _dirty = true;
                     }
-                }
-                else if (versionType == EAssetBundleVersionType.Increase)
-                {
+
+                    // 绘制输出目录
+                    EditorGUILayout.BeginHorizontal(GUILayout.Height(20), GUILayout.ExpandWidth(true));
+                    {
+                        EditorGUILayout.LabelField("输出目录", GUILayout.Width(150));
+                        if (GUILayout.Button(outputDir, GUILayout.ExpandWidth(true)))
+                        {
+                            string selectedPath = EditorUtility.OpenFolderPanel("选择输出目录",
+                                Application.dataPath, Application.dataPath);
+                            if (!string.IsNullOrEmpty(selectedPath))
+                            {
+                                // 保存绝对路径
+                                outputDir = selectedPath;
+                                _dirty = true;
+                            }
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    // 绘制版本类型
+                    var newVersionType = (EAssetBundleVersionType)EditorGUILayout.EnumPopup("版本类型", versionType);
+                    if (newVersionType != versionType)
+                    {
+                        versionType = newVersionType;
+                        _dirty = true;
+                    }
+
+                    if (versionType == EAssetBundleVersionType.Specific)
+                    {
+                        // 绘制版本号
+                        var newVersion = EditorGUILayout.TextField("版本号", specificVersion);
+                        if (newVersion != specificVersion)
+                        {
+                            specificVersion = newVersion;
+                            _dirty = true;
+                        }
+                    }
+                    else if (versionType == EAssetBundleVersionType.Increase)
+                    {
+                        GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
+                        {
+                            // 绘制递增版本号
+                            EditorGUILayout.LabelField("递增版本号", GUILayout.Width(150));
+                            EditorGUILayout.LabelField(Version, GUILayout.ExpandWidth(true));
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+
+                    // 绘制是否复制到StreamingAssets下和上传远程地址
                     GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
-                    // 绘制递增版本号
-                    EditorGUILayout.LabelField("递增版本号", GUILayout.Width(150));
-                    EditorGUILayout.LabelField(Version, GUILayout.ExpandWidth(true));
+                    {
+                        GUILayout.Label("复制到StreamingAssets下", GUILayout.Width(150));
+                        var newCopyToStreamingAssets = EditorGUILayout.Toggle(copyToStreamingAssets);
+                        if (newCopyToStreamingAssets != copyToStreamingAssets)
+                        {
+                            copyToStreamingAssets = newCopyToStreamingAssets;
+                            _dirty = true;
+                        }
+
+                        GUILayout.Label("上传远程地址", GUILayout.Width(150));
+                        var newUploadRemoteUrl = EditorGUILayout.TextField(uploadRemoteUrl);
+                        if (newUploadRemoteUrl != uploadRemoteUrl)
+                        {
+                            uploadRemoteUrl = newUploadRemoteUrl;
+                            _dirty = true;
+                        }
+                    }
+                    GUILayout.EndHorizontal();
+
+                    // 绘制是否引用分析
+                    GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
+                    {
+                        GUILayout.Label("引用分析", GUILayout.Width(150));
+                        var newAnalyze = EditorGUILayout.Toggle(analyze);
+                        if (newAnalyze != analyze)
+                        {
+                            analyze = newAnalyze;
+                            _dirty = true;
+                        }
+
+                        if (analyze)
+                        {
+                            var newAnalyzeLimit = EditorGUILayout.IntField("引用数量阈值", analyzeLimit);
+                            newAnalyzeLimit = Mathf.Max(newAnalyzeLimit, 1);
+                            if (newAnalyzeLimit != analyzeLimit)
+                            {
+                                analyzeLimit = newAnalyzeLimit;
+                                _dirty = true;
+                            }
+                        }
+                    }
+                    GUILayout.EndHorizontal();
+
+                    // 绘制按钮,向左移动,向右移动,移动到最前,移动到最后,删除
+                    GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
+                    {
+                        GUILayout.FlexibleSpace(); // 最右边留白
+                        if (GUILayout.Button("←", GUILayout.Width(50)))
+                        {
+                            content.MoveTab(true, false);
+                        }
+
+                        if (GUILayout.Button("→", GUILayout.Width(50)))
+                        {
+                            content.MoveTab(false, false);
+                        }
+
+                        if (GUILayout.Button("|←", GUILayout.Width(50)))
+                        {
+                            content.MoveTab(true, true);
+                        }
+
+                        if (GUILayout.Button("→|", GUILayout.Width(50)))
+                        {
+                            content.MoveTab(false, true);
+                        }
+                    }
                     GUILayout.EndHorizontal();
                 }
+                EditorGUILayout.EndVertical();
 
-                // 绘制是否复制到StreamingAssets下和上传远程地址
-                GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
-                GUILayout.Label("复制到StreamingAssets下", GUILayout.Width(150));
-                var newCopyToStreamingAssets = EditorGUILayout.Toggle(copyToStreamingAssets);
-                if (newCopyToStreamingAssets != copyToStreamingAssets)
+                EditorGUILayout.Space();
+                EditorGUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
                 {
-                    copyToStreamingAssets = newCopyToStreamingAssets;
-                    _dirty = true;
-                }
-                GUILayout.Label("上传远程地址", GUILayout.Width(150));
-                var newUploadRemoteUrl = EditorGUILayout.TextField(uploadRemoteUrl);
-                if (newUploadRemoteUrl != uploadRemoteUrl)
-                {
-                    uploadRemoteUrl = newUploadRemoteUrl;
-                    _dirty = true;
-                }
-                GUILayout.EndHorizontal();
-                // 绘制是否引用分析
-                GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
-                GUILayout.Label("引用分析", GUILayout.Width(150));
-                var newAnalyze = EditorGUILayout.Toggle(analyze);
-                if (newAnalyze != analyze)
-                {
-                    analyze = newAnalyze;
-                    _dirty = true;
-                }
-                if (analyze)
-                {
-                    var newAnalyzeLimit = EditorGUILayout.IntField("引用数量阈值", analyzeLimit);
-                    newAnalyzeLimit = Mathf.Max(newAnalyzeLimit, 1);
-                    if (newAnalyzeLimit != analyzeLimit)
+                    GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
                     {
-                        analyzeLimit = newAnalyzeLimit;
-                        _dirty = true;
+                        // 所有指定变体信息
+                        GUILayout.Label("额外变体信息", GUILayout.Width(150));
+                        var newShaderVariantCount = EditorGUILayout.IntField(
+                            extraShaderVariant.Count,
+                            GUILayout.ExpandWidth(true));
+                        if (newShaderVariantCount != extraShaderVariant.Count)
+                        {
+                            // 移除多余的变体信息
+                            for (int i = extraShaderVariant.Count - 1;
+                                 i >= newShaderVariantCount;
+                                 i--)
+                            {
+                                extraShaderVariant.RemoveAt(i);
+                            }
+
+                            // 增加不足的变体信息
+                            for (int i = extraShaderVariant.Count;
+                                 i < newShaderVariantCount;
+                                 i++)
+                            {
+                                extraShaderVariant.Add(new ShaderVariantInfo());
+                            }
+
+                            _dirty = true;
+                        }
+                    }
+                    GUILayout.EndHorizontal();
+
+                    for (int i = 0; i < extraShaderVariant.Count; i++)
+                    {
+                        EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
+                        {
+                            EditorGUILayout.LabelField($"变体信息{i}:", GUILayout.Width(150));
+                            
+                            var shaderVariantInfo = extraShaderVariant[i];
+                            if (GUILayout.Button(shaderVariantInfo.ShaderPath, GUILayout.Width(400)))
+                            {
+                                string selectedPath = EditorUtility.OpenFilePanelWithFilters("选择shader",
+                                    Application.dataPath, new string[] { "shader", "shader" });
+                                if (!string.IsNullOrEmpty(selectedPath) &&
+                                    selectedPath.StartsWith(Application.dataPath))
+                                {
+                                    shaderVariantInfo.ShaderPath =
+                                        "Assets" + selectedPath.Replace(Application.dataPath, "");
+                                    _dirty = true;
+                                }
+                            }
+
+                            var shaderVariantCount = EditorGUILayout.IntField(
+                                shaderVariantInfo.ShaderVariants.Count,
+                                GUILayout.Width(20));
+                            if (shaderVariantCount != shaderVariantInfo.ShaderVariants.Count)
+                            {
+                                for (int k = shaderVariantInfo.ShaderVariants.Count - 1;
+                                     k >= shaderVariantCount;
+                                     k--)
+                                {
+                                    shaderVariantInfo.ShaderVariants.RemoveAt(k);
+                                }
+
+                                for (int k = shaderVariantInfo.ShaderVariants.Count;
+                                     k < shaderVariantCount;
+                                     k++)
+                                {
+                                    shaderVariantInfo.ShaderVariants.Add(string.Empty);
+                                }
+
+                                _dirty = true;
+                            }
+
+                            for (int j = 0; j < shaderVariantInfo.ShaderVariants.Count; j++)
+                            {
+                                var index = j;
+                                var shaderVariant = shaderVariantInfo.ShaderVariants[index];
+                                var newShaderVariant = EditorGUILayout.TextField(shaderVariant);
+                                if (newShaderVariant != shaderVariant)
+                                {
+                                    shaderVariantInfo.ShaderVariants[index] = newShaderVariant;
+                                    _dirty = true;
+                                }
+                            }
+                        }
+                        EditorGUILayout.EndHorizontal();
                     }
                 }
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space();
 
-                GUILayout.EndHorizontal();
-
-                // 绘制按钮,向左移动,向右移动,移动到最前,移动到最后,删除
+                // 绘制+按钮和-按钮,增加一条新收集器和移除当前选中的收集器
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
-
-                GUILayout.FlexibleSpace(); // 最右边留白
-                if (GUILayout.Button("←", GUILayout.Width(50)))
                 {
-                    content.MoveTab(true, false);
-                }
-
-                if (GUILayout.Button("→", GUILayout.Width(50)))
-                {
-                    content.MoveTab(false, false);
-                }
-
-                if (GUILayout.Button("|←", GUILayout.Width(50)))
-                {
-                    content.MoveTab(true, true);
-                }
-
-                if (GUILayout.Button("→|", GUILayout.Width(50)))
-                {
-                    content.MoveTab(false, true);
-                }
-
-                GUILayout.EndHorizontal();
-            }
-            EditorGUILayout.EndVertical();
-
-            // 绘制+按钮和-按钮,增加一条新收集器和移除当前选中的收集器
-            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true), GUILayout.Height(20));
-
-            GUILayout.FlexibleSpace(); // 最右边留白
-            if (GUILayout.Button("+", GUILayout.Width(50)))
-            {
-                var newCollector = new AssetBundleInfoCollector();
-                fileCollectors.Add(newCollector);
-                _curSelectedIndex = fileCollectors.Count - 1;
-                EditorPrefs.SetInt(_selectedIndexSaveKey, _curSelectedIndex);
-            }
-
-            if (GUILayout.Button("-", GUILayout.Width(50)))
-            {
-                if (_curSelectedIndex >= 0 && _curSelectedIndex < fileCollectors.Count)
-                {
-                    fileCollectors.RemoveAt(_curSelectedIndex);
-                    if (_curSelectedIndex >= fileCollectors.Count)
+                    GUILayout.FlexibleSpace(); // 最右边留白
+                    if (GUILayout.Button("+", GUILayout.Width(50)))
                     {
+                        var newCollector = new AssetBundleInfoCollector();
+                        fileCollectors.Add(newCollector);
                         _curSelectedIndex = fileCollectors.Count - 1;
+                        EditorPrefs.SetInt(_selectedIndexSaveKey, _curSelectedIndex);
                     }
 
-                    EditorPrefs.SetInt(_selectedIndexSaveKey, _curSelectedIndex);
+                    if (GUILayout.Button("-", GUILayout.Width(50)))
+                    {
+                        if (_curSelectedIndex >= 0 && _curSelectedIndex < fileCollectors.Count)
+                        {
+                            fileCollectors.RemoveAt(_curSelectedIndex);
+                            if (_curSelectedIndex >= fileCollectors.Count)
+                            {
+                                _curSelectedIndex = fileCollectors.Count - 1;
+                            }
+
+                            EditorPrefs.SetInt(_selectedIndexSaveKey, _curSelectedIndex);
+                        }
+                    }
+                }
+                GUILayout.EndHorizontal();
+
+                // 使用滚动视图绘制所有收集器
+                _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.ExpandWidth(true),
+                    GUILayout.ExpandHeight(true));
+                {
+                    for (int i = 0; i < fileCollectors.Count; i++)
+                    {
+                        var collector = fileCollectors[i];
+
+                        // 绘制收集器
+                        collector.OnDrawGUI(this, _curSelectedIndex == i);
+                    }
+                }
+                EditorGUILayout.EndScrollView();
+
+                // 打包按钮
+                if (GUILayout.Button("打包资源"))
+                {
+                    AssetBundleBuild().Forget();
                 }
             }
-
-            GUILayout.EndHorizontal();
-
-            // 使用滚动视图绘制所有收集器
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.ExpandWidth(true),
-                GUILayout.ExpandHeight(true));
-            for (int i = 0; i < fileCollectors.Count; i++)
-            {
-                var collector = fileCollectors[i];
-
-                // 绘制收集器
-                collector.OnDrawGUI(this, _curSelectedIndex == i);
-            }
-
-            EditorGUILayout.EndScrollView();
-
-            // 打包按钮
-            if (GUILayout.Button("打包资源"))
-            {
-                AssetBundleBuild().Forget();
-            }
-
             GUILayout.EndVertical();
         }
 
@@ -490,13 +599,13 @@ namespace WWFramework
             try
             {
                 await buildProcedure.Execute();
-                
+
                 // 打包完成后记录上次打包版本号
                 lastVersion = Version;
                 EditorUtility.SetDirty(this);
                 AssetDatabase.SaveAssetIfDirty(this);
                 AssetDatabase.Refresh();
-                
+
                 // 打开打包文件夹
                 EditorUtility.RevealInFinder(BuildOutputDir);
             }
