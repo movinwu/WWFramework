@@ -12,10 +12,6 @@ namespace WWFramework
     /// <summary>
     /// 网络连接配置
     /// </summary>
-    [CreateAssetMenu(
-        fileName = GlobalEditorStringDefine.NetworkConfigName, 
-        menuName = GlobalEditorStringDefine.NetworkConfig, 
-        order = GlobalEditorPriorityDefine.NetworkConfig)]
     public class NetworkConfig : ScriptableObject
     {
         [Header("大厅服务器地址")] public string lobbyAddress = "127.0.0.1";

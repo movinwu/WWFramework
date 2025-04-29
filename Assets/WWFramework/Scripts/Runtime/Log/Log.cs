@@ -21,28 +21,6 @@ namespace WWFramework
         /// 内部使用的StringBuilder,用于构造日志
         /// </summary>
         private static readonly StringBuilder LOGInfoBuilder = new StringBuilder();
-
-        /// <summary>
-        /// 允许打印的日志类型
-        /// </summary>
-        private static ELogType _enableLogType;
-
-        /// <summary>
-        /// 允许打印的日志级别
-        /// </summary>
-        private static (bool enableDebug, bool enableWarning, bool enableError) _logLevel;
-
-        /// <summary>
-        /// 初始化日志
-        /// </summary>
-        public static void Init()
-        {
-            _enableLogType = GameEntry.GlobalGameConfig.enableLogType;
-            _logLevel = (
-                GameEntry.GlobalGameConfig.enableLogDebug, 
-                GameEntry.GlobalGameConfig.enableLogWarning, 
-                GameEntry.GlobalGameConfig.enableLogError);
-        }
         
         /// <summary>
         /// log日志
@@ -54,11 +32,11 @@ namespace WWFramework
             // 游戏运行中进行日志类型判断和日志级别判断
             if (Application.isPlaying)
             {
-                if (!_logLevel.enableDebug)
+                if (!GameEntry.GlobalGameConfig.logConfig.enableLogDebug)
                 {
                     return;
                 }
-                if ((_enableLogType & logType) == 0)
+                if ((GameEntry.GlobalGameConfig.logConfig.enableLogType & logType) == 0)
                 {
                     return;
                 }
@@ -128,11 +106,11 @@ namespace WWFramework
             // 游戏运行中进行日志类型判断和日志级别判断
             if (Application.isPlaying)
             {
-                if (!_logLevel.enableWarning)
+                if (!GameEntry.GlobalGameConfig.logConfig.enableLogWarning)
                 {
                     return;
                 }
-                if ((_enableLogType & logType) == 0)
+                if ((GameEntry.GlobalGameConfig.logConfig.enableLogType & logType) == 0)
                 {
                     return;
                 }
@@ -202,11 +180,11 @@ namespace WWFramework
             // 游戏运行中进行日志类型判断和日志级别判断
             if (Application.isPlaying)
             {
-                if (!_logLevel.enableError)
+                if (!GameEntry.GlobalGameConfig.logConfig.enableLogError)
                 {
                     return;
                 }
-                if ((_enableLogType & logType) == 0)
+                if ((GameEntry.GlobalGameConfig.logConfig.enableLogType & logType) == 0)
                 {
                     return;
                 }

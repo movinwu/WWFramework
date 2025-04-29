@@ -24,32 +24,7 @@ namespace WWFramework
         /// <summary>
         /// 全局游戏配置路径
         /// </summary>
-        public const string GlobalGameConfig = "ScriptableObject/GlobalGameConfig";
-
-        /// <summary>
-        /// 全局游戏配置名称
-        /// </summary>
-        public const string GlobalGameConfigName = "GlobalGameConfig";
-        
-        /// <summary>
-        /// 网络配置路径
-        /// </summary>
-        public const string NetworkConfig = "ScriptableObject/NetworkConfig";
-        
-        /// <summary>
-        /// 网络配置名称
-        /// </summary>
-        public const string NetworkConfigName = "NetworkConfig";
-        
-        /// <summary>
-        /// AB 构建配置路径
-        /// </summary>
-        public const string AssetBundleInfoConfig = "ScriptableObject/AssetBundleInfoConfig";
-
-        /// <summary>
-        /// AB 构建配置名称
-        /// </summary>
-        public const string AssetBundleInfoConfigName = "AssetBundleInfoConfig";
+        public const string GameConfigFolderPath = "Assets/Res/Config";
         
         /// <summary>
         /// AB 构建配置文件夹路径

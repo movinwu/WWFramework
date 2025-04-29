@@ -11,25 +11,6 @@ namespace WWFramework
     /// </summary>
     public class GlobalEditorPriorityDefine
     {
-        #region ScriptableObject配置
-        
-        /// <summary>
-        /// 资源包构建配置
-        /// </summary>
-        public const int AssetBundleInfoConfig = 1;
-
-        /// <summary>
-        /// 全局游戏配置
-        /// </summary>
-        public const int GlobalGameConfig = 2;
-
-        /// <summary>
-        /// 网络配置
-        /// </summary>
-        public const int NetworkConfig = 3;
-
-        #endregion ScriptableObject配置
-        
         #region 脚本模板
 
         /// <summary>

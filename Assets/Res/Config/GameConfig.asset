@@ -10,10 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7274a3c6425270d4db8d7eefdd67d780, type: 3}
-  m_Name: GlobalGameConfig
+  m_Name: GameConfig
   m_EditorClassIdentifier: 
-  enableLogType: -1
-  enableLogDebug: 1
-  enableLogWarning: 1
-  enableLogError: 1
-  networkConfig: {fileID: 11400000, guid: 7f6caf06baf30de40a6090f807ee416b, type: 2}
+  logConfig: {fileID: 0}
+  networkConfig: {fileID: 0}
+  resourceConfig: {fileID: 0}

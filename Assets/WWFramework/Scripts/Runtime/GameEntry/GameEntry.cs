@@ -5,10 +5,9 @@
 ------------------------------*/
 
 using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace WWFramework
 {
@@ -17,13 +16,30 @@ namespace WWFramework
     /// </summary>
     public partial class GameEntry : MonoBehaviour
     {
-        [Header("全局游戏配置"), SerializeField]
-        private GameConfig globalGameConfig;
+        [Header("全局游戏配置"), SerializeField] private GameConfig globalGameConfig;
+
+        private static GameConfig _globalGameConfig;
 
         /// <summary>
         /// 全局游戏配置
         /// </summary>
-        public static GameConfig GlobalGameConfig { get; private set; }
+        public static GameConfig GlobalGameConfig
+        {
+            get
+            {
+                if (null == _globalGameConfig)
+                {
+#if UNITY_EDITOR
+                    // 编辑器下确保配置文件存在
+                    CheckGlobalConfigExist();
+#else
+                    throw new Exception("请确保全局游戏配置文件已生成并正确赋值");
+#endif
+                }
+
+                return _globalGameConfig;
+            }
+        }
 
         #region 主包中各模块声明
 
@@ -31,17 +47,17 @@ namespace WWFramework
         /// 流程模块
         /// </summary>
         public static MainProcedureModule MainProcedure { get; private set; }
-        
+
         /// <summary>
         /// 网络模块
         /// </summary>
         public static NetworkClientModule NetworkClient { get; private set; }
-        
+
         /// <summary>
         /// 池模块
         /// </summary>
         public static PoolModule Pool { get; private set; }
-        
+
         /// <summary>
         /// 事件模块
         /// </summary>
@@ -55,20 +71,18 @@ namespace WWFramework
             DontDestroyOnLoad(this.gameObject);
             
             // 赋值全局游戏配置
-            GlobalGameConfig = globalGameConfig;
-            // 初始化日志
-            Log.Init();
+            _globalGameConfig = globalGameConfig;
             
             // 初始化各个模块
             MainProcedure = AddModule<MainProcedureModule>();
             NetworkClient = AddModule<NetworkClientModule>();
             Pool = AddModule<PoolModule>();
             Event = AddModule<EventModule>();
-            
+
             // 模块初始化完成,开始执行主流程
             MainProcedure.StartMainProcedure().Forget();
         }
-        
+
         private void OnDestroy()
         {
             // 释放各个模块并置空
@@ -106,5 +120,34 @@ namespace WWFramework
                 return module;
             }
         }
+
+#if UNITY_EDITOR
+        
+        /// <summary>
+        /// 检查全局配置
+        /// </summary>
+        [ContextMenu("检查全局配置")]
+        private void CheckGlobalConfig()
+        {
+            CheckGlobalConfigExist();
+            globalGameConfig = _globalGameConfig;
+        }
+
+        /// <summary>
+        /// 检查全局配置文件是否存在
+        /// </summary>
+        private static void CheckGlobalConfigExist()
+        {
+            var path = $"{GlobalEditorStringDefine.GameConfigFolderPath}/{nameof(GameConfig)}.asset";
+            _globalGameConfig = AssetDatabase.LoadAssetAtPath<GameConfig>(path);
+            if (null == _globalGameConfig)
+            {
+                _globalGameConfig = ScriptableObject.CreateInstance<GameConfig>();
+                AssetDatabase.CreateAsset(_globalGameConfig, path);
+                AssetDatabase.SaveAssets();
+            }
+            _globalGameConfig.CheckConfigs();
+        }
+#endif
     }
 }

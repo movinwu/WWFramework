@@ -9,12 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2634384565eace4d897ceab6f7b62b5, type: 3}
-  m_Name: NetworkConfig
+  m_Script: {fileID: 11500000, guid: 0cd5d78549fd7c4428d9d18efa8323f5, type: 3}
+  m_Name: ResourceConfig
   m_EditorClassIdentifier: 
-  lobbyAddress: 127.0.0.1
-  gameAddress: 127.0.0.1
-  gamePort: 8080
-  connectTimeout: 5000
-  reconnectInterval: 5000
-  reconnectCount: 3
+  extraShaderVariantMaterialPath: Assets/TempMaterials

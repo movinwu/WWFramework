@@ -23,7 +23,7 @@ namespace WWFramework
         protected override UniTask DoExecute()
         {
             // 每个指定的额外shader变体信息,都生成一个不打包的临时材质
-            var tempMaterialFolderPath = "Assets/TempMaterials";
+            var tempMaterialFolderPath = GameEntry.GlobalGameConfig.resourceConfig.extraShaderVariantMaterialPath;
             // 删除临时文件夹下所有文件
             if (AssetDatabase.IsValidFolder(tempMaterialFolderPath))
             {
@@ -58,6 +58,7 @@ namespace WWFramework
                 var materialPath = $"{tempMaterialFolderPath}/{Path.GetFileNameWithoutExtension(shaderVariantInfo.ShaderPath)}_{string.Join("_", shaderVariantInfo.ShaderVariants)}_{shaderVariantInfo.GetHashCode()}.mat";
                 // 保存材质
                 AssetDatabase.CreateAsset(material, materialPath);
+                // 添加变体路径
             }
             return base.DoExecute();
         }
