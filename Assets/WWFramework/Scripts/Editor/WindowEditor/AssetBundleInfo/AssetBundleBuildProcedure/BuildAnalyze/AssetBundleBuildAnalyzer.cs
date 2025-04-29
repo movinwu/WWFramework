@@ -52,12 +52,23 @@ namespace WWFramework
                     foreach (var file in collector.collectedFiles)
                     {
                         var guid = AssetDatabase.AssetPathToGUID(file);
-                        if (!_fileAnalyzeInfoDic.ContainsKey(guid))
-                        {
-                            _fileAnalyzeInfoDic.Add(guid, info);
-                            info.AddFile(guid);
-                        }
+                        _fileAnalyzeInfoDic.TryAdd(guid, info);
+                        info.AddFile(guid);
                     }
+                }
+            }
+            
+            // 添加Shader变体材质
+            var materialPath = GameEntry.GlobalGameConfig.resourceConfig.extraShaderVariantMaterialPath;
+            var guids = AssetDatabase.FindAssets("t:Material", new[] {materialPath});
+            foreach (var guid in guids)
+            {
+                if (!_fileAnalyzeInfoDic.ContainsKey(guid))
+                {
+                    var filePath = AssetDatabase.GUIDToAssetPath(guid);
+                    var info = new AssetBundleBuildAnalyzeInfo(ECollectorInfoType.EachFile, true, filePath);
+                    info.AddFile(guid);
+                    _fileAnalyzeInfoDic.Add(guid, info);
                 }
             }
         }

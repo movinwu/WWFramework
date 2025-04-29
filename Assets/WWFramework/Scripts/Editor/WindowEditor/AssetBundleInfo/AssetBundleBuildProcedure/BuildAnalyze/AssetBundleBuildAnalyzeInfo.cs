@@ -147,11 +147,7 @@ namespace WWFramework
             void GenerateBuild(ref AssetBundleBuild build)
             {
                 // 包名(路径名作为包名)
-                build.assetBundleName = _bundlePath
-                    .Replace("Assets/", string.Empty)
-                    .Replace('.', '+')
-                    .Replace('/', '-')
-                    .Replace('\\', '-');
+                build.assetBundleName = ResourceHelper.PathToAssetBundlePath(_bundlePath);
                 // 后缀
                 build.assetBundleVariant = string.Empty;
                 // 文件列表

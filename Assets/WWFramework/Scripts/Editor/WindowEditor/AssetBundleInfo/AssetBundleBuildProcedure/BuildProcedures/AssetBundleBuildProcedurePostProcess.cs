@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Cysharp.Threading.Tasks;
+using UnityEditor;
 
 namespace WWFramework
 {
@@ -23,6 +24,17 @@ namespace WWFramework
 
         protected override UniTask DoExecute()
         {
+            // 所有shader变体材质资源名称
+            var extraShaderVariants = new HashSet<string>();
+            var extraVariantPath = GameEntry.GlobalGameConfig.resourceConfig.extraShaderVariantMaterialPath;
+            var extraMaterials = AssetDatabase.FindAssets("t:Material", new string[]{extraVariantPath});
+            foreach (var extraMaterial in extraMaterials)
+            {
+                var materialAssetBundlePath =
+                    ResourceHelper.PathToAssetBundlePath(AssetDatabase.GUIDToAssetPath(extraMaterial));
+                extraShaderVariants.Add(materialAssetBundlePath);
+            }
+            
             // 根据清单文件生成文件信息字符串,保存在文档中
             var allBundles = Config.assetBundleManifest.GetAllAssetBundles()
                 .SelectList(x => $"{x};{Config.assetBundleManifest.GetAssetBundleHash(x).ToString()}");

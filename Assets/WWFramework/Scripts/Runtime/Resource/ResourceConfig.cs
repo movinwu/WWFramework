@@ -20,5 +20,17 @@ namespace WWFramework
         [Header("额外shader变体材质路径")]
         public string extraShaderVariantMaterialPath = "Assets/TempMaterials";
 #endif
+        
+        /// <summary>
+        /// AB包加载失败,重新加载次数
+        /// </summary>
+        [Header("AB包加载失败,重新加载次数")]
+        public int abLoadRetryCount = 0;
+        
+        [Header("AB包释放延迟时间")]
+        public float abReleaseDelayTime = 3;
+        
+        [Header("资源释放延迟时间")]
+        public float assetReleaseDelayTime = 3;
     }
 }

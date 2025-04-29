@@ -24,25 +24,16 @@ namespace WWFramework
         {
             // 每个指定的额外shader变体信息,都生成一个不打包的临时材质
             var tempMaterialFolderPath = GameEntry.GlobalGameConfig.resourceConfig.extraShaderVariantMaterialPath;
+            // 使用C#文件操作直接删除文件夹下的所有文件,不考虑资源依赖关系
+            var directoryPath =
+                $"{Application.dataPath.Substring(0, Application.dataPath.Length - 6)}{tempMaterialFolderPath}";
             // 删除临时文件夹下所有文件
-            if (AssetDatabase.IsValidFolder(tempMaterialFolderPath))
+            if (Directory.Exists(directoryPath))
             {
-                // 使用C#文件操作直接删除文件夹下的所有文件,不考虑资源依赖关系
-                var directoryInfo =
-                    new DirectoryInfo(Path.Combine(Application.dataPath, "TempMaterials").Replace('\\', '/'));
-                foreach (var file in directoryInfo.GetFiles())
-                {
-                    file.Delete();
-                }
-                foreach (var directory in directoryInfo.GetDirectories())
-                {
-                    directory.Delete(true);
-                }
+                Directory.Delete(directoryPath, true);
             }
-            else
-            {
-                AssetDatabase.CreateFolder("Assets", "TempMaterials");
-            }
+            Directory.CreateDirectory(directoryPath);
+            
             // 创建材质
             foreach (var shaderVariantInfo in Config.extraShaderVariant)
             {
@@ -58,9 +49,8 @@ namespace WWFramework
                 var materialPath = $"{tempMaterialFolderPath}/{Path.GetFileNameWithoutExtension(shaderVariantInfo.ShaderPath)}_{string.Join("_", shaderVariantInfo.ShaderVariants)}_{shaderVariantInfo.GetHashCode()}.mat";
                 // 保存材质
                 AssetDatabase.CreateAsset(material, materialPath);
-                // 添加变体路径
             }
-            return base.DoExecute();
+            return UniTask.CompletedTask;
         }
     }
 }

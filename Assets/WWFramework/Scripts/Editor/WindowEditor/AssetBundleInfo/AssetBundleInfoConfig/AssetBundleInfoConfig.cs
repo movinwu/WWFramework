@@ -615,7 +615,7 @@ namespace WWFramework
                 var errorMsg =
                     $"打包出错, 当前打包流程:{buildProcedure.CurrentExecutingProcedure.GetType()}错误信息:{e.Message}\n{e.StackTrace}";
                 EditorUtility.DisplayDialog("打包出错", errorMsg, "确定");
-                Log.LogError(x => { x.Append(errorMsg); });
+                Log.LogError(x => { x.Append(errorMsg); }, ELogType.Resource);
             }
 
             EditorUtility.ClearProgressBar();
