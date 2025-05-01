@@ -34,17 +34,12 @@ namespace WWFramework
         /// 被依赖的AB包数据
         /// </summary>
         /// <returns></returns>
-        private readonly List<AssetBundleData> _dependents;
-        
+        private readonly HashSet<AssetBundleData> _dependents;
+
         /// <summary>
-        /// 加载中加载状态
+        /// 是否正在加载中
         /// </summary>
-        private ELoadStatus LoadingStatus { get; set; }
-        
-        /// <summary>
-        /// 最终加载结果的加载状态
-        /// </summary>
-        private ELoadStatus LoadedStatus {  get; set; }
+        private bool _isLoading;
         
         /// <summary>
         /// ab包
@@ -65,32 +60,28 @@ namespace WWFramework
         /// 所有资源
         /// </summary>
         private readonly Dictionary<string, AssetFileData> _assetFiles;
+
+        /// <summary>
+        /// 已经加载完毕的所有资源数量
+        /// </summary>
+        private int _loadedAssetCount = 0;
         
         public AssetBundleData(string md5, string name,  List<AssetBundleData> dependencies)
         {
             MD5 = md5;
             Name = name;
             _dependencies = dependencies;
-            _dependents = new List<AssetBundleData>();
+            _dependents = new HashSet<AssetBundleData>();
             if (null == _dependencies)
             {
                 _dependencies = new List<AssetBundleData>(0);
             }
-            // 添加所有被依赖的包
-            foreach (var dependency in _dependencies)
-            {
-                dependency._dependents.Add(this);
-            }
-            LoadingStatus = ELoadStatus.NotStart;
-            LoadedStatus = ELoadStatus.NotStart;
+            _dependents = new HashSet<AssetBundleData>();
+            _isLoading = false;
             AssetBundle = null;
             _assetFiles = new Dictionary<string, AssetFileData>();
+            _loadedAssetCount = 0;
             _releaseHandler = new DelayInvokeHandler();
-        }
-
-        public AssetBundleData(List<AssetBundleData> dependents)
-        {
-            _dependents = dependents;
         }
 
         /// <summary>
@@ -120,27 +111,23 @@ namespace WWFramework
             _releaseHandler.Cancel();
             
             // 已经发起加载的,不再重新发起加载
-            if (LoadedStatus != ELoadStatus.NotStart)
+            if (_isLoading)
             {
                 return;
             }
-            LoadedStatus = ELoadStatus.Loading;
+
+            _isLoading = true;
             
-            if (LoadingStatus == ELoadStatus.NotStart)
+            if (resetRetryTimer)
             {
-                LoadingStatus = ELoadStatus.Loading;
-                if (resetRetryTimer)
-                {
-                    _loadRetryTimer = 0;
-                }
-                // TODO 开始加载,走网络加载或本地文件加载
+                _loadRetryTimer = 0;
             }
+            // TODO 开始加载,走网络加载或本地文件加载
             
-            await UniTask.WaitUntil(() => LoadingStatus == ELoadStatus.Loaded || LoadingStatus == ELoadStatus.Faulted);
-            if (LoadingStatus == ELoadStatus.Loaded)
+            await UniTask.WaitUntil(() => null != AssetBundle);
+            if (null != AssetBundle)
             {
-                LoadingStatus = ELoadStatus.NotStart;
-                LoadedStatus = ELoadStatus.Loaded;
+                _isLoading = false;
                 return;
             }
             // 加载失败,是否走重新加载的逻辑
@@ -150,15 +137,16 @@ namespace WWFramework
                 sb.Append(Name);
             }, ELogType.Resource);
             _loadRetryTimer++;
-            LoadingStatus = ELoadStatus.NotStart;
             if (_loadRetryTimer > GameEntry.GlobalGameConfig.resourceConfig.abLoadRetryCount)
             {
-                LoadedStatus = ELoadStatus.Faulted;
+                _isLoading = false;
+                return;
             }
             else
             {
                 await LoadBundle(false);
             }
+            _isLoading = false;
         }
         
         /// <summary>
@@ -179,12 +167,14 @@ namespace WWFramework
             for (int i = 0; i < _dependencies.Count; i++)
             {
                 waitTasks[i] = _dependencies[i].LoadBundle();
+                // 添加依赖关系
+                _dependencies[i].AddDependent(this);
             }
             waitTasks[_dependencies.Count] = LoadBundle();
             await UniTask.WhenAll(waitTasks);
             
             // 确保当前的最终加载状态都是完成(依赖包加载失败,仍然加载资源)
-            if (LoadedStatus != ELoadStatus.Loaded)
+            if (null == AssetBundle)
             {
                 TryReleaseAsset();
                 return default(T);
@@ -194,6 +184,10 @@ namespace WWFramework
             if (null == asset)
             {
                 TryReleaseAsset();
+            }
+            else
+            {
+                _loadedAssetCount++;
             }
             return asset;
         }
@@ -208,7 +202,31 @@ namespace WWFramework
             {
                 return;
             }
-            assetFile.UnloadAsset(assetPath);
+
+            if (assetFile.UnloadAsset(assetPath))
+            {
+                _loadedAssetCount--;
+                TryReleaseAsset();
+            }
+        }
+
+        /// <summary>
+        /// 添加被依赖
+        /// </summary>
+        /// <param name="dependency"></param>
+        private void AddDependent(AssetBundleData dependency)
+        {
+            _dependents.Add(dependency);
+        }
+        
+        /// <summary>
+        /// 移除被依赖
+        /// </summary>
+        /// <param name="dependency"></param>
+        private void RemoveDependent(AssetBundleData dependency)
+        {
+            _dependents.Remove(dependency);
+            TryReleaseAsset();
         }
 
         /// <summary>
@@ -217,41 +235,37 @@ namespace WWFramework
         public void TryReleaseAsset()
         {
             // 检查所有资源的引用情况
-            foreach (var assetFile in _assetFiles.Values)
+            if (_loadedAssetCount < 0)
             {
-                if (assetFile.LoadStatus != ELoadStatus.NotStart
-                    && assetFile.LoadStatus != ELoadStatus.Loaded)
+                Log.LogError(sb =>
                 {
-                    return;
-                }
+                    sb.Append($"ab包加载出的资源引用计数异常,检查是否重复减少引用");
+                }, ELogType.Resource);
+                _loadedAssetCount = 0;
             }
-            // 检查所有被依赖包都释放完成
-            foreach (var dependent in _dependents)
+            else if (_loadedAssetCount == 0)
             {
-                if (dependent.LoadedStatus != ELoadStatus.NotStart
-                    && dependent.LoadedStatus != ELoadStatus.Loaded)
+                if (_dependents.Count == 0)
                 {
-                    return;
-                }
-            }
-            
-            _releaseHandler.DelayInvoke(() =>
-            {
-                LoadedStatus = ELoadStatus.NotStart;
-                LoadingStatus = ELoadStatus.NotStart;
-                AssetBundle = null;
-                // 重置所有资源
-                foreach (var assetFile in _assetFiles.Values)
-                {
-                    assetFile.Reset();
-                }
-                // 所有依赖包尝试释放
-                foreach (var dependency in _dependencies)
-                {
-                    dependency.TryReleaseAsset();
-                }
+                    _releaseHandler.DelayInvoke(() =>
+                    {
+                        _isLoading = false;
+                        AssetBundle.Unload(true);
+                        AssetBundle = null;
+                        // 重置所有资源
+                        foreach (var assetFile in _assetFiles.Values)
+                        {
+                            assetFile.Reset();
+                        }
+                        // 所有依赖包尝试释放
+                        foreach (var dependency in _dependencies)
+                        {
+                            dependency.RemoveDependent(this);
+                        }
                 
-            }, GameEntry.GlobalGameConfig.resourceConfig.abReleaseDelayTime);
+                    }, GameEntry.GlobalGameConfig.resourceConfig.abReleaseDelayTime);
+                }
+            }
         }
     }
 }

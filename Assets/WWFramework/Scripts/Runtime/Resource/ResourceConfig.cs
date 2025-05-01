@@ -21,6 +21,9 @@ namespace WWFramework
         public string extraShaderVariantMaterialPath = "Assets/TempMaterials";
 #endif
         
+        [Header("资源模式")]
+        public EResourceMode resourceMode = EResourceMode.Development;
+        
         /// <summary>
         /// AB包加载失败,重新加载次数
         /// </summary>
