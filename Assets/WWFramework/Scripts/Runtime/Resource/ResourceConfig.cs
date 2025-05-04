@@ -22,7 +22,10 @@ namespace WWFramework
 #endif
         
         [Header("资源模式")]
-        public EResourceMode resourceMode = EResourceMode.Development;
+        public EResourceMode resourceMode = EResourceMode.LocalAssetBundle;
+        
+        [Header("本地存放AB包文件夹路径")]
+        public string abLocalPath = "LocalAssetBundle";
         
         /// <summary>
         /// AB包加载失败,重新加载次数

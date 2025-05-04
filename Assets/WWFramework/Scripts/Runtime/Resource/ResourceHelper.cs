@@ -12,11 +12,11 @@ namespace WWFramework
     public static class ResourceHelper
     {
         /// <summary>
-        /// 文件或文件夹路径转AssetBundle路径
+        /// 文件或文件夹路径转AssetBundle名称
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
-        public static string PathToAssetBundlePath(string path)
+        public static string PathToAssetBundleName(string path)
         {
             return path
                 .Replace("Assets/", string.Empty)
@@ -26,15 +26,44 @@ namespace WWFramework
         }
 
         /// <summary>
-        /// AssetBundle路径转文件或文件夹路径
+        /// AssetBundle名称转文件或文件夹路径
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public static string AssetBundlePathToPath(string path)
+        public static string AssetBundleNameToPath(string name)
         {
-            return path
+            return name
                 .Replace("+", ".")
                 .Replace('-', '/');
+        }
+
+        /// <summary>
+        /// 获取资源扩展字符串
+        /// </summary>
+        /// <param name="extension"></param>
+        /// <returns></returns>
+        public static string GetExtension(EResourceExtension extension)
+        {
+            switch (extension)
+            {
+                case EResourceExtension.png:
+                    return ".png";
+                case EResourceExtension.txt:
+                    return ".txt";
+                case EResourceExtension.json:
+                    return ".json";
+                case EResourceExtension.xml:
+                    return ".xml";
+                case EResourceExtension.mat:
+                    return ".mat";
+                case EResourceExtension.audio:
+                    return ".mp3";
+                case EResourceExtension.texture:
+                    return ".png";
+                case EResourceExtension.prefab:
+                    return ".prefab";
+            }
+            return string.Empty;
         }
     }
 }

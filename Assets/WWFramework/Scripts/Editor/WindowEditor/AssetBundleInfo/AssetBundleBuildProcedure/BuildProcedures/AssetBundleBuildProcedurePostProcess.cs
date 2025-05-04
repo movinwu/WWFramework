@@ -31,7 +31,7 @@ namespace WWFramework
             foreach (var extraMaterial in extraMaterials)
             {
                 var materialAssetBundlePath =
-                    ResourceHelper.PathToAssetBundlePath(AssetDatabase.GUIDToAssetPath(extraMaterial));
+                    ResourceHelper.PathToAssetBundleName(AssetDatabase.GUIDToAssetPath(extraMaterial));
                 extraShaderVariants.Add(materialAssetBundlePath);
             }
             

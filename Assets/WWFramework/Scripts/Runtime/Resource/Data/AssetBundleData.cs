@@ -4,6 +4,7 @@
  * 创建日期: 2025/04/30
 ------------------------------*/
 
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -59,18 +60,28 @@ namespace WWFramework
         /// <summary>
         /// 所有资源
         /// </summary>
-        private readonly Dictionary<string, AssetFileData> _assetFiles;
+        private readonly Dictionary<string, AssetBundleFileData> _assetFiles;
 
         /// <summary>
         /// 已经加载完毕的所有资源数量
         /// </summary>
         private int _loadedAssetCount = 0;
+
+        /// <summary>
+        /// 加载AssetBundle资源委托
+        /// </summary>
+        private Func<AssetBundleData, UniTask<AssetBundle>> _loadAssetBundleFunc;
         
-        public AssetBundleData(string md5, string name,  List<AssetBundleData> dependencies)
+        public AssetBundleData(
+            string md5,
+            string name, 
+            List<AssetBundleData> dependencies,
+            Func<AssetBundleData, UniTask<AssetBundle>> loadAssetBundleFunc)
         {
             MD5 = md5;
             Name = name;
             _dependencies = dependencies;
+            _loadAssetBundleFunc = loadAssetBundleFunc;
             _dependents = new HashSet<AssetBundleData>();
             if (null == _dependencies)
             {
@@ -79,7 +90,7 @@ namespace WWFramework
             _dependents = new HashSet<AssetBundleData>();
             _isLoading = false;
             AssetBundle = null;
-            _assetFiles = new Dictionary<string, AssetFileData>();
+            _assetFiles = new Dictionary<string, AssetBundleFileData>();
             _loadedAssetCount = 0;
             _releaseHandler = new DelayInvokeHandler();
         }
@@ -97,7 +108,7 @@ namespace WWFramework
             
             if (!_assetFiles.ContainsKey(assetPath))
             {
-                _assetFiles.Add(assetPath, new AssetFileData(this, assetPath));
+                _assetFiles.Add(assetPath, new AssetBundleFileData(this, assetPath));
             }
         }
 
@@ -122,9 +133,13 @@ namespace WWFramework
             {
                 _loadRetryTimer = 0;
             }
-            // TODO 开始加载,走网络加载或本地文件加载
             
-            await UniTask.WaitUntil(() => null != AssetBundle);
+            // 异步加载AB包(网络加载或本地加载)
+            if (null != _loadAssetBundleFunc)
+            {
+                AssetBundle = await _loadAssetBundleFunc(this);
+            }
+            
             if (null != AssetBundle)
             {
                 _isLoading = false;

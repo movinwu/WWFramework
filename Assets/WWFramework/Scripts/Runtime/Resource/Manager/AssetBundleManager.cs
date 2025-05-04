@@ -19,7 +19,7 @@ namespace WWFramework
         /// 所有AB包数据
         /// key-资源路径,value-资源所属AB包数据
         /// </summary>
-        private Dictionary<string, AssetBundleData> _allAssetBundle = new Dictionary<string, AssetBundleData>();
+        private readonly Dictionary<string, AssetBundleData> _allAssetBundleDatas = new Dictionary<string, AssetBundleData>();
 
         /// <inheritdoc/>
         public UniTask Init()
@@ -27,10 +27,20 @@ namespace WWFramework
             throw new System.NotImplementedException();
         }
 
+        /// <summary>
+        /// 实际加载AB包的方法
+        /// </summary>
+        /// <param name="assetBundleData"></param>
+        /// <returns></returns>
+        protected virtual UniTask<AssetBundle> LoadAssetBundle(AssetBundleData assetBundleData)
+        {
+            return UniTask.FromResult(AssetBundle.LoadFromFile(assetBundleData.Name));
+        }
+
         /// <inheritdoc/>
         public async UniTask<T> LoadAsset<T>(string assetPath) where T : Object
         {
-            if (_allAssetBundle.TryGetValue(assetPath, out var assetBundleData))
+            if (_allAssetBundleDatas.TryGetValue(assetPath, out var assetBundleData))
             {
                 return await assetBundleData.LoadAsset<T>(assetPath);
             }
@@ -41,7 +51,7 @@ namespace WWFramework
         /// <inheritdoc/>
         public void UnloadAsset(string assetPath)
         {
-            if (_allAssetBundle.TryGetValue(assetPath, out var assetBundleData))
+            if (_allAssetBundleDatas.TryGetValue(assetPath, out var assetBundleData))
             {
                 assetBundleData.UnloadAsset(assetPath);
             }
@@ -50,13 +60,17 @@ namespace WWFramework
         /// <inheritdoc/>
         public void UnloadAllAsset()
         {
-            
+            foreach (var assetBundleData in _allAssetBundleDatas.Values)
+            {
+                assetBundleData.TryReleaseAsset();
+            }
         }
 
         /// <inheritdoc/>
         public void Release()
         {
-            throw new System.NotImplementedException();
+            UnloadAllAsset();
+            _allAssetBundleDatas.Clear();
         }
     }
 }
