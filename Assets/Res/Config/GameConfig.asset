@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7274a3c6425270d4db8d7eefdd67d780, type: 3}
   m_Name: GameConfig
   m_EditorClassIdentifier: 
-  logConfig: {fileID: 0}
-  networkConfig: {fileID: 0}
-  resourceConfig: {fileID: 0}
+  logConfig: {fileID: 11400000, guid: 1ee1d5e3c2fe2d548ac59874d6edaafc, type: 2}
+  networkConfig: {fileID: 11400000, guid: 7f6caf06baf30de40a6090f807ee416b, type: 2}
+  resourceConfig: {fileID: 11400000, guid: e37bd4304569a1d42b0ad9fb46696f06, type: 2}
+  dataTableConfig: {fileID: 11400000, guid: b83543d9235fca946a9d237107ddbe85, type: 2}

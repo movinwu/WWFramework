@@ -33,5 +33,14 @@ namespace WWFramework
         public const int GlobalEditorWindow = 1;
 
         #endregion 编辑器窗口
+
+        #region 数据表导表
+
+        /// <summary>
+        /// 数据表导表
+        /// </summary>
+        public const int DataTableConvertEditor = 1;
+
+        #endregion
     }
 }

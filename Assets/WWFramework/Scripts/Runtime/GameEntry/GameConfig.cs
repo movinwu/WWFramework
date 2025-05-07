@@ -20,6 +20,8 @@ namespace WWFramework
         [Header("网络配置")] public NetworkConfig networkConfig;
 
         [Header("资源配置")] public ResourceConfig resourceConfig;
+        
+        [Header("数据表配置")] public DataTableConfig dataTableConfig;
 
 #if UNITY_EDITOR
         
@@ -43,6 +45,11 @@ namespace WWFramework
             {
                 resourceConfig = CheckConfig<ResourceConfig>();
             }
+            
+            if (null == dataTableConfig)
+            {
+                dataTableConfig = CheckConfig<DataTableConfig>();
+            }
 
             T CheckConfig<T>() where T : ScriptableObject
             {
@@ -51,8 +58,8 @@ namespace WWFramework
                 if (config == null)
                 {
                     config = ScriptableObject.CreateInstance<T>();
-                    AssetDatabase.CreateAsset(config, path);
-                    AssetDatabase.SaveAssets();
+                    EditorUtility.SetDirty(config);
+                    AssetDatabase.SaveAssetIfDirty(config);
                 }
 
                 return config;

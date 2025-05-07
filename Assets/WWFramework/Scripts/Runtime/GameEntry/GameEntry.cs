@@ -143,10 +143,10 @@ namespace WWFramework
             if (null == _globalGameConfig)
             {
                 _globalGameConfig = ScriptableObject.CreateInstance<GameConfig>();
-                AssetDatabase.CreateAsset(_globalGameConfig, path);
-                AssetDatabase.SaveAssets();
             }
             _globalGameConfig.CheckConfigs();
+            EditorUtility.SetDirty(_globalGameConfig);
+            AssetDatabase.SaveAssetIfDirty(_globalGameConfig);
         }
 #endif
     }

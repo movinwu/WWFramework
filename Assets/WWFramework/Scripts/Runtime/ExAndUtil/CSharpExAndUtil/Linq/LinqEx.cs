@@ -661,5 +661,64 @@ namespace WWFramework
         }
 
         #endregion Contains
+
+        #region Concat
+        
+        public static TSource[] ConcatArray<TSource>(
+            this TSource[] first,
+            TSource[] second,
+            Func<TSource, bool> predicate)
+        {
+            if (ReferenceEquals(second, null))
+            {
+                throw new ArgumentNullException("second list is null");
+            }
+
+            TSource[] resultArray = null;
+            if (null == predicate)
+            {
+                resultArray = new TSource[first.Length + second.Length];
+                for (int i = 0; i < first.Length; i++)
+                {
+                    resultArray[i] = first[i];
+                }
+                for (int i = 0; i < second.Length; i++)
+                {
+                    resultArray[first.Length + i] = second[i];
+                }
+                return resultArray;
+            }
+            
+            bool[] result = new bool[first.Length + second.Length];
+            int count = 0;
+            for (int i = 0; i < first.Length; i++)
+            {
+                result[i] = predicate(first[i]);
+                if (result[i])
+                {
+                    count++;
+                }
+            }
+            for (int i = 0; i < second.Length; i++)
+            {
+                result[first.Length + i] = predicate(second[i]);
+                if (result[first.Length + i])
+                {
+                    count++;
+                }
+            }
+            resultArray = new TSource[count];
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (result[i])
+                {
+                    resultArray[^count] = first[i];
+                    count--;
+                }
+            }
+            return resultArray;
+        }
+        
+        #endregion Contains
     }
 }

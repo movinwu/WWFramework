@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd5d78549fd7c4428d9d18efa8323f5, type: 3}
-  m_Name: ResourceConfig
+  m_Script: {fileID: 11500000, guid: ea49b5c13a9e6ff4a8ca028c349e0f02, type: 3}
+  m_Name: DataTableConfig
   m_EditorClassIdentifier: 
-  extraShaderVariantMaterialPath: Assets/TempMaterials
-  resourceMode: 0
-  abLocalPath: LocalAssetBundle
-  abLoadRetryCount: 0
-  abReleaseDelayTime: 3
-  assetReleaseDelayTime: 3
+  dataTableExcelPath: Assets/Res/DataTable/Excel
+  dataTableSheetPrefix:
+  - D_
+  - DT_
+  dataTableBytePath: Assets/Res/DataTable/Byte
+  dataTableNames: []

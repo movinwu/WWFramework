@@ -34,6 +34,11 @@ namespace WWFramework
         /// <summary>
         /// 全局编辑器窗口路径
         /// </summary>
-        public const string GlobalEditorWindow = "WWFramework/GlobalEditorWindow";
+        public const string GlobalEditorWindow = "框架/全局窗口";
+
+        /// <summary>
+        /// 数据表转换编辑器路径
+        /// </summary>
+        public const string DataTableConvertEditor = "数据表/转换全部数据表";
     }
 }
