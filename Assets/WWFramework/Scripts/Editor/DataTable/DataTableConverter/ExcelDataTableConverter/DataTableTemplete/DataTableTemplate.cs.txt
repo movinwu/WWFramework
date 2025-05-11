@@ -1,0 +1,19 @@
+/*------------------------------
+ * 脚本名称: #NAME#
+ * 描述: 代码自动生成,任何修改都将失效,类已声明为partial,可拓展
+------------------------------*/
+
+namespace WWFramework
+{
+    /// <summary>
+    /// #NAME# 数据表行
+    /// </summary>
+    public partial class #NAME# #TYPE#
+    {
+#FIELDS#
+        public override void DeserializedFields(ByteBuffer buffer)
+        {
+#READER#
+        }
+    }
+}

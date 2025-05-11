@@ -4,6 +4,7 @@
  * 创建日期: 2025/05/04
 ------------------------------*/
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace WWFramework
@@ -16,11 +17,17 @@ namespace WWFramework
 #if UNITY_EDITOR
 
         [Header("excel路径")] public string dataTableExcelPath;
+        
+        [Header("模板路径")] public string dataTableTemplatePath;
+        
+        [Header("cs路径")] public string dataTableCsPath;
 
 #endif
 
-        [Header("数据表byte保存路径")] public string dataTableBytePath;
+        [Header("byte路径")] public string dataTableBytePath;
 
-        [Header("包含所有数据表名称"), ReadOnly] public string[] dataTableNames;
+        [Header("所有数据表名称"), ReadOnly] public List<string> dataTableNames;
+
+        [Header("数组分割字符串")] public char[] arraySplitChars;
     }
 }

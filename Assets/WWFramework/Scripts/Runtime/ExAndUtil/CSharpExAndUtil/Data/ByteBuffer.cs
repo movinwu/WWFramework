@@ -88,6 +88,11 @@ namespace WWFramework
             Buffer.BlockCopy(data, offset, _buffer, WritePointer, length);
         }
 
+        public void WriteBool(bool data)
+        {
+            WriteByte(data ? (byte)1 : (byte)0);
+        }
+
         public void WriteByte(byte data)
         {
             CheckWritePointer(WritePointer + 1);
@@ -229,6 +234,8 @@ namespace WWFramework
             return bytes;
         }
         
+        public bool ReadBool() => ReadByte() != 0;
+
         public byte ReadByte()
         {
             if (CheckReadPointer(ReadPointer + 1))

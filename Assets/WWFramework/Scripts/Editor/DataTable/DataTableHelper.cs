@@ -22,11 +22,32 @@ namespace WWFramework
         /// <summary>
         /// 创建Excel数据表字段
         /// </summary>
-        public static IExcelDataTableField CreateExcelDataTableField(string fieldName, string fieldType,
-            string fieldDescribe)
+        public static IExcelDataTableField CreateExcelDataTableField(string fieldType)
         {
             switch (fieldType)
             {
+                case "byte":
+                    return new ExcelByteField();
+                case "short":
+                    return new ExcelShortField();
+                case "int":
+                    return new ExcelIntField();
+                case "long":
+                    return new ExcelLongField();
+                case "string":
+                    return new ExcelStringField();
+                case "bool":
+                    return new ExcelBoolField();
+                case "float":
+                    return new ExcelFloatField();
+                case "double":
+                    return new ExcelDoubleField();
+                case "char":
+                    return new ExcelCharField();
+                case "int[]":
+                    return new ExcelIntArrayField();
+                case "int[][]":
+                    return new ExcelInt2DArrayField();
                 default:
                     return null;
             }

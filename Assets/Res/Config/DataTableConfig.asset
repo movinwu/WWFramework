@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DataTableConfig
   m_EditorClassIdentifier: 
   dataTableExcelPath: Assets/Res/DataTable/Excel
-  dataTableSheetPrefix:
-  - D_
-  - DT_
+  dataTableTemplatePath: Assets/WWFramework/Scripts/Editor/DataTable/DataTableConverter/ExcelDataTableConverter/DataTableTemplete/DataTableTemplate.cs.txt
+  dataTableCsPath: Assets/Res/DataTable/CS
   dataTableBytePath: Assets/Res/DataTable/Byte
   dataTableNames: []
+  arraySplitChars: 23002600
