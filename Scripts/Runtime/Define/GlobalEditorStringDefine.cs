@@ -24,7 +24,7 @@ namespace WWFramework
         /// <summary>
         /// 全局游戏配置路径
         /// </summary>
-        public const string GameConfigFolderPath = "Assets/Res/Config";
+        public const string GameConfigFolderPath = "Assets/WWFramework/Res/Config";
         
         /// <summary>
         /// AB 构建配置文件夹路径
