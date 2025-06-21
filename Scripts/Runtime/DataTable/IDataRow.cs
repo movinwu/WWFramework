@@ -16,13 +16,13 @@ namespace WWFramework
         /// <summary>
         /// 反序列化id
         /// </summary>
-        /// <param name="buffer"></param>
-        void DeserializedId(ByteBuffer buffer);
+        /// <param name="bufferReader"></param>
+        void DeserializedId(ByteBufferReader bufferReader);
 
         /// <summary>
         /// 反序列化字段
         /// </summary>
-        /// <param name="buffer"></param>
-        void DeserializedFields(ByteBuffer buffer);
+        /// <param name="bufferReader"></param>
+        void DeserializedFields(ByteBufferReader bufferReader);
     }
 }

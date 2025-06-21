@@ -58,7 +58,7 @@ namespace WWFramework
             stringBuilder.AppendLine("            }");
         }
 
-        public void SerializeField(ByteBuffer writeBuffer, string cellContent, string excelPath, string sheetName, int row, int col)
+        public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
         {
             var values = cellContent.Split(GameEntry.GlobalGameConfig.dataTableConfig.arraySplitChars[0]);
             var intArray = new int[values.Length];
@@ -87,10 +87,10 @@ namespace WWFramework
                     return;
                 }
             }
-            writeBuffer.WriteInt(intArray.Length);
+            writeBufferReader.WriteInt32(intArray.Length);
             for (int i = 0; i < intArray.Length; i++)
             {
-                writeBuffer.WriteInt(intArray[i]);
+                writeBufferReader.WriteInt32(intArray[i]);
             }
         }
     }

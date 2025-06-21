@@ -45,15 +45,15 @@ namespace WWFramework
             stringBuilder.AppendLine(" = buffer.ReadShort();");
         }
 
-        public void SerializeField(ByteBuffer writeBuffer, string cellContent, string excelPath, string sheetName, int row, int col)
+        public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
         {
             if (short.TryParse(cellContent.Trim(), out var value))
             {
-                writeBuffer.WriteShort(value);
+                writeBufferReader.WriteInt16(value);
             }
             else
             {
-                writeBuffer.WriteShort(0);
+                writeBufferReader.WriteInt16(0);
                 Log.LogError(sb =>
                 {
                     sb.Append("数据表");

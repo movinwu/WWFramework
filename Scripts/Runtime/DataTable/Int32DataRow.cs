@@ -13,15 +13,15 @@ namespace WWFramework
     {
         public int ID { get; private set; }
 
-        public void DeserializedId(ByteBuffer buffer)
+        public void DeserializedId(ByteBufferReader bufferReader)
         {
-            this.ID = buffer.ReadInt();
+            this.ID = bufferReader.ReadInt32();
         }
 
         /// <summary>
         /// 序列化字段
         /// </summary>
-        /// <param name="buffer"></param>
-        public abstract void DeserializedFields(ByteBuffer buffer);
+        /// <param name="bufferReader"></param>
+        public abstract void DeserializedFields(ByteBufferReader bufferReader);
     }
 }

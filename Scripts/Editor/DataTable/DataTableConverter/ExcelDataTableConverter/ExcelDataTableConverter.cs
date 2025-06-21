@@ -29,7 +29,7 @@ namespace WWFramework
         /// <summary>
         /// 字节数组
         /// </summary>
-        private ByteBuffer _buffer = new ByteBuffer();
+        private ByteBufferWriter _bufferReader = new ByteBufferWriter();
         
         public async UniTask ConvertAll()
         {
@@ -195,18 +195,18 @@ namespace WWFramework
                     }
                     
                     // 写入数据长度
-                    _buffer.WritePointer = 0;
-                    _buffer.WriteInt(rowCount);
+                    _bufferReader.ResetWriter();
+                    _bufferReader.WriteInt32(rowCount);
                     // 记录写入数据长度的写入指针位置
                     var pointer = rowCount * 4 + 4;
                     // 循环遍历,逐行写入
                     for (var i = 0; i < rowCount; i++)
                     {
-                        _buffer.WritePointer = pointer;
+                        _bufferReader.WritePointer = pointer;
                         for (var j = 1; j < fields.Count; j++)
                         {
                             fields[j].fieldParser?.SerializeField(
-                                _buffer,
+                                _bufferReader,
                                 ReadSheetCell(sheet, i + 5, j + 2),  
                                 filePath, 
                                 name,
@@ -214,15 +214,14 @@ namespace WWFramework
                                 j + 2);
                         }
                         // 写入完成后,记录写入指针位置,计算写入长度,最后将数据长度写入到数据表头部
-                        var newPointer = _buffer.WritePointer;
-                        _buffer.WritePointer = 4 + i * 4;
-                        _buffer.WriteInt(newPointer - pointer);
+                        var newPointer = _bufferReader.WritePointer;
+                        _bufferReader.WritePointer = 4 + i * 4;
+                        _bufferReader.WriteInt32(newPointer - pointer);
                         pointer = newPointer;
-                        _buffer.WritePointer = newPointer;
+                        _bufferReader.WritePointer = newPointer;
                     }
                     // 所有数据写入完成,写入文件
-                    _buffer.ReadPointer = 0;
-                    await  File.WriteAllBytesAsync(savePath, _buffer.CopyUnreadBytes());
+                    await  File.WriteAllBytesAsync(savePath, _bufferReader.ToArray());
                     
                     // 导入模板类
                     var templateAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(

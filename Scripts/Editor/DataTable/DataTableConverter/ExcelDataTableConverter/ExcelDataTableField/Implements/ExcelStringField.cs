@@ -45,9 +45,9 @@ namespace WWFramework
             stringBuilder.AppendLine(" = buffer.ReadString();");
         }
 
-        public void SerializeField(ByteBuffer writeBuffer, string cellContent, string excelPath, string sheetName, int row, int col)
+        public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
         {
-            writeBuffer.WriteString(cellContent);
+            writeBufferReader.WriteString(cellContent);
         }
     }
 }

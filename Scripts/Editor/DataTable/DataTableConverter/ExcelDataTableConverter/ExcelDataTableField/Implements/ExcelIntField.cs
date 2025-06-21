@@ -37,15 +37,15 @@ namespace WWFramework
             stringBuilder.AppendLine(" = buffer.ReadInt();");
         }
 
-        public void SerializeField(ByteBuffer writeBuffer, string cellContent, string excelPath, string sheetName, int row, int col)
+        public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
         {
             if (int.TryParse(cellContent.Trim(), out var value))
             {
-                writeBuffer.WriteInt(value);
+                writeBufferReader.WriteInt32(value);
             }
             else
             {
-                writeBuffer.WriteInt(0);
+                writeBufferReader.WriteInt32(0);
                 Log.LogError(sb =>
                 {
                     sb.Append("数据表");

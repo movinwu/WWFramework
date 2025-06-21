@@ -46,12 +46,12 @@ namespace WWFramework
         /// <summary>
         /// 序列化字段
         /// </summary>
-        /// <param name="writeBuffer"></param>
+        /// <param name="writeBufferReader"></param>
         /// <param name="cellContent"></param>
         /// <param name="excelPath"></param>
         /// <param name="sheetName"></param>
         /// <param name="row"></param>
         /// <param name="col"></param>
-        void SerializeField(ByteBuffer writeBuffer, string cellContent, string excelPath, string sheetName, int row, int col);
+        void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col);
     }
 }
