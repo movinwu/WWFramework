@@ -42,7 +42,7 @@ namespace WWFramework
         {
             stringBuilder.Append("            ");
             stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine(" = buffer.ReadShort();");
+            stringBuilder.AppendLine(" = buffer.ReadInt16();");
         }
 
         public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)

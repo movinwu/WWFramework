@@ -40,9 +40,9 @@ namespace WWFramework
 
         public void GenerateDeserializeField(StringBuilder stringBuilder, string excelPath, string sheetName, string fieldName)
         {
-            stringBuilder.Append("            ");
+            stringBuilder.Append("            buffer.ReadString(out ");
             stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine(" = buffer.ReadString();");
+            stringBuilder.AppendLine(");");
         }
 
         public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)

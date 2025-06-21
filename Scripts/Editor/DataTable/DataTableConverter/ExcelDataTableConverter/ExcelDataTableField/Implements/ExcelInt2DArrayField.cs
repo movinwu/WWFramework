@@ -40,37 +40,9 @@ namespace WWFramework
 
         public void GenerateDeserializeField(StringBuilder stringBuilder, string excelPath, string sheetName, string fieldName)
         {
-            stringBuilder.Append("            var ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length0 = buffer.ReadInt();");
             stringBuilder.Append("            ");
             stringBuilder.Append(fieldName);
-            stringBuilder.Append(" = new int[");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length0][];");
-            stringBuilder.Append("            for (int i = 0; i < ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length0; i++)");
-            stringBuilder.AppendLine("            {");
-            
-            stringBuilder.Append("                var ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length1 = buffer.ReadInt();");
-            stringBuilder.Append("                ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.Append(" = new int[");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length1][];");
-            stringBuilder.Append("                for (int j = 0; j < ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length1; j++)");
-            stringBuilder.AppendLine("                {");
-            stringBuilder.Append("                    ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("[i][j] = buffer.ReadInt();");
-            stringBuilder.AppendLine("                }");
-            
-            stringBuilder.AppendLine("            }");
+            stringBuilder.AppendLine(" = buffer.ReadInt32ArrayArray();");
         }
 
         public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
@@ -107,15 +79,7 @@ namespace WWFramework
                     }
                 }
             }
-            writeBufferReader.WriteInt32(int2DArray.Length);
-            for (int i = 0; i < int2DArray.Length; i++)
-            {
-                writeBufferReader.WriteInt32(int2DArray[i].Length);
-                for (int j = 0; j < int2DArray[i].Length; j++)
-                {
-                    writeBufferReader.WriteInt32(int2DArray[i][j]);
-                }
-            }
+            writeBufferReader.WriteInt32ArrayArray(int2DArray);
         }
     }
 }

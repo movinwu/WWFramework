@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Web;
 
@@ -339,7 +340,7 @@ namespace NetCoreServer
                 // Iterate through all directory entries
                 foreach (var item in Directory.GetDirectories(path))
                 {
-                    string key = keyPrefix + HttpUtility.UrlDecode(Path.GetFileName(item));
+                    string key = keyPrefix + WebUtility.UrlDecode(Path.GetFileName(item));
 
                     // Recursively insert sub-directory
                     if (!InsertPathInternal(item, key, timeout, handler))
@@ -348,7 +349,7 @@ namespace NetCoreServer
 
                 foreach (var item in Directory.GetFiles(path))
                 {
-                    string key = keyPrefix + HttpUtility.UrlDecode(Path.GetFileName(item));
+                    string key = keyPrefix + WebUtility.UrlDecode(Path.GetFileName(item));
 
                     // Insert file into the cache
                     if (!InsertFileInternal(item, key, timeout, handler))

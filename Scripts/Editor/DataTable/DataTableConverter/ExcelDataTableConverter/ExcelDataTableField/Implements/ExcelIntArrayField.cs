@@ -40,22 +40,9 @@ namespace WWFramework
 
         public void GenerateDeserializeField(StringBuilder stringBuilder, string excelPath, string sheetName, string fieldName)
         {
-            stringBuilder.Append("            var ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length = buffer.ReadInt();");
             stringBuilder.Append("            ");
             stringBuilder.Append(fieldName);
-            stringBuilder.Append(" = new int[");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length];");
-            stringBuilder.Append("            for (int i = 0; i < ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("_length; i++)");
-            stringBuilder.AppendLine("            {");
-            stringBuilder.Append("                ");
-            stringBuilder.Append(fieldName);
-            stringBuilder.AppendLine("[i] = buffer.ReadInt();");
-            stringBuilder.AppendLine("            }");
+            stringBuilder.AppendLine(" = buffer.ReadInt32Array();");
         }
 
         public void SerializeField(ByteBufferWriter writeBufferReader, string cellContent, string excelPath, string sheetName, int row, int col)
@@ -87,11 +74,7 @@ namespace WWFramework
                     return;
                 }
             }
-            writeBufferReader.WriteInt32(intArray.Length);
-            for (int i = 0; i < intArray.Length; i++)
-            {
-                writeBufferReader.WriteInt32(intArray[i]);
-            }
+            writeBufferReader.WriteInt32Array(intArray);
         }
     }
 }
