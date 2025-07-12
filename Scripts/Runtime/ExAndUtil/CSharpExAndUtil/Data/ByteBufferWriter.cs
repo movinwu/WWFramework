@@ -1,11 +1,14 @@
 /*------------------------------
- * 脚本名称: ByteBuffer
+ * 脚本名称: ByteBufferWriter
  * 创建者: movin
  * 创建日期: 2025/05/07
 ------------------------------*/
 
+#if UNITY_PS3 || UNITY_WII || UNITY_WIIU
+    #define BIG_ENDIAN // 大端序平台
+#endif
+
 using System;
-using System.Text;
 using UnityEngine;
 
 namespace WWFramework
@@ -13,6 +16,7 @@ namespace WWFramework
     /// <summary>
     /// byte数据写入类
     /// <para> 提供各种整形，浮点型及布尔的写入，并支持了数组写入，当前最多支持二维数组 </para>
+    /// <para> 写入顺序和读取顺序统一为小端序，避免跨平台出现字节序问题，因此对大端序平台进行特殊处理，大端序平台按照小端序平台的顺序逐字节写入 </para>
     /// </summary>
     public sealed class ByteBufferWriter
     {
@@ -20,6 +24,11 @@ namespace WWFramework
         /// 缓存数据
         /// </summary>
         private byte[] _buffer;
+
+        /// <summary>
+        /// 缓存数据
+        /// </summary>
+        public byte[] SourceBuffer => _buffer;
 
         /// <summary>
         /// 数据指针(写入指针)
@@ -31,10 +40,7 @@ namespace WWFramework
         /// </summary>
         public int WritePointer
         {
-            get
-            {
-                return _writePointer;
-            }
+            get => _writePointer;
             set
             {
                 _writePointer = 0;
@@ -101,375 +107,554 @@ namespace WWFramework
             return pointer;
         }
 
-        /// <summary>
-        /// 可变长度的32位无符号整型数字,用于根据数字大小动态使用不同长度的字节数写入数字。
-        /// <para> 每个字节第一位为0表示没有后续字节，为1表示有后续字节 </para>
-        /// <para> 1字节： 0-127 </para>
-        /// <para> 2字节： 128-16383 </para>
-        /// <para> 3字节： 16384-2097151 </para>
-        /// <para> 4字节： 2097152-268435455 </para>
-        /// </summary>
-        /// <returns></returns>
-        public void WriteDynamicUInt32(uint data)
-        {
-            // 存储字节数
-            int byteCount;
-            if (data > 2097151)
-            {
-                byteCount = 4;
-            }
-            else if (data > 16383)
-            {
-                byteCount = 3;
-            }
-            else if (data > 127)
-            {
-                byteCount = 2;
-            }
-            else
-            {
-                byteCount = 1;
-            }
-            
-            for (int i = 0; i < byteCount; i++)
-            {
-                byte b = (byte)(data >> (i * 7));
-                if (i == byteCount - 1)
-                {
-                    b &= 0x7F;
-                }
-                else
-                {
-                    b |= 0x80;
-                }
-
-                var pointer = Advance(1);
-                _buffer[pointer] = b;
-            }
-        }
-
-        public void WriteBool(bool data)
-        {
-            _buffer[Advance(1)] = data ? (byte)1 : (byte)0;
-        }
-
-        public void WriteByte(byte data)
+        public unsafe void WriteBool(bool data)
         {
             var pointer = Advance(1);
-            _buffer[pointer] = data;
+            fixed (byte* ptr = _buffer)
+            {
+                *(bool*)(ptr + pointer) = data;
+            }
         }
-        
-        public void WriteSbyte(sbyte data)
+
+        public unsafe void WriteByte(byte data)
         {
             var pointer = Advance(1);
-            _buffer[pointer] = (byte)data;
+            fixed (byte* ptr = _buffer)
+            {
+                *(ptr + pointer) = data;
+            }
+        }
+        
+        public unsafe void WriteSbyte(sbyte data)
+        {
+            var pointer = Advance(1);
+            fixed (byte* ptr = _buffer)
+            {
+                *(sbyte*)(ptr + pointer) = data;
+            }
         }
 
-        public void WriteInt16(short data)
+        public unsafe void WriteInt16(short data)
         {
             var pointer = Advance(2);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+#else
+                *(short*)(ptr + pointer) = data;
+#endif
+            }
         }
-        
-        public void WriteUInt16(ushort data)
+    
+        public unsafe void WriteUInt16(ushort data)
         {
             var pointer = Advance(2);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+#else
+                *(ushort*)(ptr + pointer) = data;
+#endif
+            }
         }
-        
-        public void WriteInt32(int data)
+    
+        public unsafe void WriteInt32(int data)
         {
             var pointer = Advance(4);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
-            _buffer[pointer + 2] = (byte)(data >> 16);
-            _buffer[pointer + 3] = (byte)(data >> 24);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+                p[2] = (byte)(data >> 16);
+                p[3] = (byte)(data >> 24);
+#else
+                *(int*)(ptr + pointer) = data;
+#endif
+            }
         }
-        
-        public void WriteUInt32(uint data)
+    
+        public unsafe void WriteUInt32(uint data)
         {
             var pointer = Advance(4);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
-            _buffer[pointer + 2] = (byte)(data >> 16);
-            _buffer[pointer + 3] = (byte)(data >> 24);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+                p[2] = (byte)(data >> 16);
+                p[3] = (byte)(data >> 24);
+#else
+                *(uint*)(ptr + pointer) = data;
+#endif
+            }
         }
 
-        public void WriteInt64(long data)
+        public unsafe void WriteInt64(long data)
         {
             var pointer = Advance(8);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
-            _buffer[pointer + 2] = (byte)(data >> 16);
-            _buffer[pointer + 3] = (byte)(data >> 24);
-            _buffer[pointer + 4] = (byte)(data >> 32);
-            _buffer[pointer + 5] = (byte)(data >> 40);
-            _buffer[pointer + 6] = (byte)(data >> 48);
-            _buffer[pointer + 7] = (byte)(data >> 56);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+                p[2] = (byte)(data >> 16);
+                p[3] = (byte)(data >> 24);
+                p[4] = (byte)(data >> 32);
+                p[5] = (byte)(data >> 40);
+                p[6] = (byte)(data >> 48);
+                p[7] = (byte)(data >> 56);
+#else
+                *(long*)(ptr + pointer) = data;
+#endif
+            }
         }
-
-        public void WriteUInt64(ulong data)
+    
+        public unsafe void WriteUInt64(ulong data)
         {
             var pointer = Advance(8);
-            _buffer[pointer] = (byte)data;
-            _buffer[pointer + 1] = (byte)(data >> 8);
-            _buffer[pointer + 2] = (byte)(data >> 16);
-            _buffer[pointer + 3] = (byte)(data >> 24);
-            _buffer[pointer + 4] = (byte)(data >> 32);
-            _buffer[pointer + 5] = (byte)(data >> 40);
-            _buffer[pointer + 6] = (byte)(data >> 48);
-            _buffer[pointer + 7] = (byte)(data >> 56);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)data;
+                p[1] = (byte)(data >> 8);
+                p[2] = (byte)(data >> 16);
+                p[3] = (byte)(data >> 24);
+                p[4] = (byte)(data >> 32);
+                p[5] = (byte)(data >> 40);
+                p[6] = (byte)(data >> 48);
+                p[7] = (byte)(data >> 56);
+#else
+                *(ulong*)(ptr + pointer) = data;
+#endif
+            }
         }
 
         public unsafe void WriteSingle(float data)
         {
             var pointer = Advance(4);
-            var num = *(uint*)&data;
-            _buffer[pointer] = (byte)num;
-            _buffer[pointer + 1] = (byte)(num >> 8);
-            _buffer[pointer + 2] = (byte)(num >> 16);
-            _buffer[pointer + 3] = (byte)(num >> 24);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                uint num = *(uint*)&data;
+                byte* p = ptr + pointer;
+                p[0] = (byte)num;
+                p[1] = (byte)(num >> 8);
+                p[2] = (byte)(num >> 16);
+                p[3] = (byte)(num >> 24);
+#else
+                *(float*)(ptr + pointer) = data;
+#endif
+            }
         }
-        
+    
         public unsafe void WriteDouble(double data)
         {
             var pointer = Advance(8);
-            var num = *(ulong*)&data;
-            _buffer[pointer] = (byte)num;
-            _buffer[pointer + 1] = (byte)(num >> 8);
-            _buffer[pointer + 2] = (byte)(num >> 16);
-            _buffer[pointer + 3] = (byte)(num >> 24);
-            _buffer[pointer + 4] = (byte)(num >> 32);
-            _buffer[pointer + 5] = (byte)(num >> 40);
-            _buffer[pointer + 6] = (byte)(num >> 48);
-            _buffer[pointer + 7] = (byte)(num >> 56);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                ulong num = *(ulong*)&data;
+                byte* p = ptr + pointer;
+                p[0] = (byte)num;
+                p[1] = (byte)(num >> 8);
+                p[2] = (byte)(num >> 16);
+                p[3] = (byte)(num >> 24);
+                p[4] = (byte)(num >> 32);
+                p[5] = (byte)(num >> 40);
+                p[6] = (byte)(num >> 48);
+                p[7] = (byte)(num >> 56);
+#else
+                *(double*)(ptr + pointer) = data;
+#endif
+            }
         }
 
-        public void WriteString(string value)
+        public unsafe void WriteString(string value)
         {
-            var pointer = Advance(2 + value.Length * 4);  // 使用UTF-8编码时，一个字符可能占用4个字节，这里保证最坏情况下也不会越界
-            var length = System.Text.Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, pointer + 2);
-            // 使用ushort存储长度，最多支持65535字节字符串长度
-            _buffer[pointer] = (byte)length;
-            _buffer[pointer + 1] = (byte)(length >> 8);
+            var pointer = Advance(4 + value.Length << 2);  // 使用UTF-8编码时，一个字符可能占用4个字节，这里保证最坏情况下也不会越界
+            var length = System.Text.Encoding.UTF8.GetBytes(value, 0, value.Length, _buffer, pointer + 4);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = ptr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+#else
+                *(int*)(ptr + pointer) = length;
+#endif
+            }
             // 重置已经不正确的写入指针
-            _writePointer = pointer + 2 + length;
+            _writePointer = pointer + 4 + length;
         }
 
-        public void WriteByteArray(byte[] value)
+        public unsafe void WriteByteArray(byte[] value)
         {
             if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length);
-            Buffer.BlockCopy(value, 0, _buffer, pointer, value.Length);
+
+            var length = value.Length;
+            var pointer = Advance(length + 4);
+            fixed (byte* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+#else
+                *(int*)(destPtr + pointer) = length;
+#endif
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, length, length);
+            }
         }
 
-        public void WriteSByteArray(sbyte[] value)
+        public unsafe void WriteSByteArray(sbyte[] value)
         {
             if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var pointer = Advance(length + 4);
+            fixed (sbyte* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                _buffer[pointer + i] = (byte)value[i];
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+#else
+                *(int*)(destPtr + pointer) = length;
+#endif
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, length, length);
             }
         }
         
-        public void WriteInt16Array(short[] value)
+        public unsafe void WriteInt16Array(short[] value)
         {
             if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 2);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 1;
+            var pointer = Advance(arrayLength + 4);
+            fixed (short* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var v = value[i];
-                _buffer[pointer + i * 2] = (byte)v;
-                _buffer[pointer + i * 2 + 1] = (byte)(v >> 8);
-            }
-        }
-        
-        public void WriteUInt16Array(ushort[] value)
-        {
-            if (value == null || value.Length == 0)
-            {
-                WriteDynamicUInt32(0);
-                return;
-            }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 2);
-            for (int i = 0; i < value.Length; i++)
-            {
-                var v = value[i];
-                _buffer[pointer + i * 2] = (byte)v;
-                _buffer[pointer + i * 2 + 1] = (byte)(v >> 8);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 2)
+                {
+                    var num = *(srcPtr + (i >> 1));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
 
-        public void WriteInt32Array(int[] value)
+        public unsafe void WriteUInt16Array(ushort[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 4);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 1;
+            var pointer = Advance(arrayLength + 4);
+            fixed (ushort* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var v = value[i];
-                _buffer[pointer + i * 4] = (byte)v;
-                _buffer[pointer + i * 4 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 4 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 4 + 3] = (byte)(v >> 24);
-            }
-        }
-        
-        public void WriteUInt32Array(uint[] value)
-        {
-            if (value == null || value.Length == 0)
-            {
-                WriteDynamicUInt32(0);
-                return;
-            }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 4);
-            for (int i = 0; i < value.Length; i++)
-            {
-                var v = value[i];
-                _buffer[pointer + i * 4] = (byte)v;
-                _buffer[pointer + i * 4 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 4 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 4 + 3] = (byte)(v >> 24);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 2)
+                {
+                    var num = *(srcPtr + (i >> 1));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
 
-        public void WriteInt64Array(long[] value)
+        public unsafe void WriteInt32Array(int[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 8);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 2;
+            var pointer = Advance(arrayLength + 4);
+            fixed (int* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var v = value[i];
-                _buffer[pointer + i * 8] = (byte)v;
-                _buffer[pointer + i * 8 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 8 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 8 + 3] = (byte)(v >> 24);
-                _buffer[pointer + i * 8 + 4] = (byte)(v >> 32);
-                _buffer[pointer + i * 8 + 5] = (byte)(v >> 40);
-                _buffer[pointer + i * 8 + 6] = (byte)(v >> 48);
-                _buffer[pointer + i * 8 + 7] = (byte)(v >> 56);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 4)
+                {
+                    var num = *(srcPtr + (i >> 2));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
         
-        public void WriteUInt64Array(ulong[] value)
+        public unsafe void WriteUInt32Array(uint[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 8);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 2;
+            var pointer = Advance(arrayLength + 4);
+            fixed (uint* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var v = value[i];
-                _buffer[pointer + i * 8] = (byte)v;
-                _buffer[pointer + i * 8 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 8 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 8 + 3] = (byte)(v >> 24);
-                _buffer[pointer + i * 8 + 4] = (byte)(v >> 32);
-                _buffer[pointer + i * 8 + 5] = (byte)(v >> 40);
-                _buffer[pointer + i * 8 + 6] = (byte)(v >> 48);
-                _buffer[pointer + i * 8 + 7] = (byte)(v >> 56);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 4)
+                {
+                    var num = *(srcPtr + (i >> 2));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
+            }
+        }
+
+        public unsafe void WriteInt64Array(long[] value)
+        {
+            if (null == value || value.Length == 0)
+            {
+                WriteInt32(0);
+                return;
+            }
+
+            var length = value.Length;
+            var arrayLength = length << 3;
+            var pointer = Advance(arrayLength + 4);
+            fixed (long* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 8)
+                {
+                    var num = *(srcPtr + (i >> 3));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                    p[i + 8] = (byte)(num >> 32);
+                    p[i + 9] = (byte)(num >> 40);
+                    p[i + 10] = (byte)(num >> 48);
+                    p[i + 11] = (byte)(num >> 56);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
+            }
+        }
+        
+        public unsafe void WriteUInt64Array(ulong[] value)
+        {
+            if (null == value || value.Length == 0)
+            {
+                WriteInt32(0);
+                return;
+            }
+
+            var length = value.Length;
+            var arrayLength = length << 3;
+            var pointer = Advance(arrayLength + 4);
+            fixed (ulong* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
+            {
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 8)
+                {
+                    var num = *(srcPtr + (i >> 3));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                    p[i + 8] = (byte)(num >> 32);
+                    p[i + 9] = (byte)(num >> 40);
+                    p[i + 10] = (byte)(num >> 48);
+                    p[i + 11] = (byte)(num >> 56);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
 
         public unsafe void WriteSingleArray(float[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 4);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 2;
+            var pointer = Advance(arrayLength + 4);
+            fixed (float* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var fv = value[i];
-                var v = *(uint*)&fv;
-                _buffer[pointer + i * 4] = (byte)v;
-                _buffer[pointer + i * 4 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 4 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 4 + 3] = (byte)(v >> 24);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 4)
+                {
+                    var num = *(uint*)(srcPtr + (i >> 2));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
         
         public unsafe void WriteDoubleArray(double[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            var pointer = Advance(value.Length * 8);
-            for (int i = 0; i < value.Length; i++)
+
+            var length = value.Length;
+            var arrayLength = length << 3;
+            var pointer = Advance(arrayLength + 4);
+            fixed (double* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
             {
-                var dv = value[i];
-                var v = *(ulong*)&dv;
-                _buffer[pointer + i * 8] = (byte)v;
-                _buffer[pointer + i * 8 + 1] = (byte)(v >> 8);
-                _buffer[pointer + i * 8 + 2] = (byte)(v >> 16);
-                _buffer[pointer + i * 8 + 3] = (byte)(v >> 24);
-                _buffer[pointer + i * 8 + 4] = (byte)(v >> 32);
-                _buffer[pointer + i * 8 + 5] = (byte)(v >> 40);
-                _buffer[pointer + i * 8 + 6] = (byte)(v >> 48);
-                _buffer[pointer + i * 8 + 7] = (byte)(v >> 56);
+#if BIG_ENDIAN
+                byte* p = destPtr + pointer;
+                p[0] = (byte)length;
+                p[1] = (byte)(length >> 8);
+                p[2] = (byte)(length >> 16);
+                p[3] = (byte)(length >> 24);
+                for (int i = 0; i < arrayLength; i += 8)
+                {
+                    var num = *(ulong*)(srcPtr + (i >> 3));
+                    p[i + 4] = (byte)num;
+                    p[i + 5] = (byte)(num >> 8);
+                    p[i + 6] = (byte)(num >> 16);
+                    p[i + 7] = (byte)(num >> 24);
+                    p[i + 8] = (byte)(num >> 32);
+                    p[i + 9] = (byte)(num >> 40);
+                    p[i + 10] = (byte)(num >> 48);
+                    p[i + 11] = (byte)(num >> 56);
+                }
+#else
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, arrayLength, arrayLength);
+#endif
             }
         }
 
-        public void WriteBoolArray(bool[] value)
+        public unsafe void WriteBoolArray(bool[] value)
         {
-            if (value == null || value.Length == 0)
+            if (null == value || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
-            byte b = 0;
-            for (int i = 0; i < value.Length; i++)
-            {
-                var v = value[i];
-                if (v)
-                {
-                    b |= (byte)(1 << (i % 8));
-                }
 
-                if (i % 8 == 7 || i == value.Length - 1)
-                {
-                    var pointer = Advance(1);
-                    _buffer[pointer] = b;
-                    b = 0;
-                }
+            var length = value.Length;
+            var pointer = Advance(length + 4);
+            fixed (bool* srcPtr = value)
+            fixed (byte* destPtr = _buffer)
+            {
+                *(int*)(destPtr + pointer) = length;
+                Buffer.MemoryCopy(srcPtr, destPtr + pointer + 4, length, length);
             }
         }
 
@@ -477,10 +662,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteString(value[i]);
@@ -491,10 +676,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteByteArray(value[i]);
@@ -505,10 +690,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteSByteArray(value[i]);
@@ -519,10 +704,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteInt16Array(value[i]);
@@ -533,10 +718,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteUInt16Array(value[i]);
@@ -547,10 +732,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteInt32Array(value[i]);
@@ -561,10 +746,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteUInt32Array(value[i]);
@@ -575,10 +760,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteInt64Array(value[i]);
@@ -589,10 +774,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteUInt64Array(value[i]);
@@ -603,10 +788,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteSingleArray(value[i]);
@@ -617,10 +802,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteDoubleArray(value[i]);
@@ -631,10 +816,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteBoolArray(value[i]);
@@ -645,10 +830,10 @@ namespace WWFramework
         {
             if (value == null || value.Length == 0)
             {
-                WriteDynamicUInt32(0);
+                WriteInt32(0);
                 return;
             }
-            WriteDynamicUInt32((uint)value.Length);
+            WriteInt32(value.Length);
             for (int i = 0; i < value.Length; i++)
             {
                 WriteStringArray(value[i]);

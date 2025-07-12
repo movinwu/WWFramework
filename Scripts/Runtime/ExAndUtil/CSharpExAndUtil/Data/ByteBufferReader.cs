@@ -1,8 +1,12 @@
 /*------------------------------
- * 脚本名称: ByteBuffer
+ * 脚本名称: ByteBufferReader
  * 创建者: movin
  * 创建日期: 2025/05/07
 ------------------------------*/
+
+#if UNITY_PS3 || UNITY_WII || UNITY_WIIU
+    #define BIG_ENDIAN // 大端序平台
+#endif
 
 using System;
 
@@ -11,6 +15,7 @@ namespace WWFramework
     /// <summary>
     /// byte数据读取类
     /// <para> 提供各种整形，浮点型及布尔的读取，并支持了数组读取，当前最多支持二维数组 </para>
+    /// <para> 写入顺序和读取顺序统一为小端序，避免跨平台出现字节序问题，因此对大端序平台进行特殊处理，大端序平台逐字节读取，并按照小端序规则拼接 </para>
     /// </summary>
     public sealed class ByteBufferReader
     {
@@ -44,6 +49,14 @@ namespace WWFramework
         }
 
         /// <summary>
+        /// 重置读取
+        /// </summary>
+        public void Reset()
+        {
+            _readPointer = 0;
+        }
+
+        /// <summary>
         /// 指针前进
         /// </summary>
         /// <param name="advance">新指针位置</param>
@@ -60,431 +73,539 @@ namespace WWFramework
             return pointer;
         }
 
-        /// <summary>
-        /// 可变长度的32位无符号整型数字,用于根据数字大小动态使用不同长度的字节数存储数字。
-        /// <para> 每个字节第一位为0表示没有后续字节，为1表示有后续字节 </para>
-        /// <para> 1字节： 0-127 </para>
-        /// <para> 2字节： 128-16383 </para>
-        /// <para> 3字节： 16384-2097151 </para>
-        /// <para> 4字节： 2097152-268435455 </para>
-        /// </summary>
-        /// <returns></returns>
-        public uint ReadDynamicUInt32()
+        public unsafe bool ReadBool()
         {
-            uint result = 0;
-
-            for (int i = 0; i < 4; i++)
+            var pointer = Advance(1);
+            fixed (byte* ptr = _buffer)
             {
-                var pointer = Advance(1);
-                var b = _buffer[pointer];
-                result |= (uint)(b & 0x7F) << (i * 7);    // 后7位为有效数字，第一位为标志位
-                if ((b >> 7) == 0)
-                {
-                    break;
-                }
+                return *(ptr + pointer) != 0;
             }
-            
-            return result;
         }
 
-        public bool ReadBool()
+        public unsafe byte ReadByte()
         {
             var pointer = Advance(1);
-            return _buffer[pointer] != 0;
-        }
-
-        public byte ReadByte()
-        {
-            var pointer = Advance(1);
-            return _buffer[pointer];
+            fixed (byte* ptr = _buffer)
+            {
+                return *(ptr + pointer);
+            }
         }
         
-        public sbyte ReadSbyte()
+        public unsafe sbyte ReadSbyte()
         {
             var pointer = Advance(1);
-            return (sbyte)_buffer[pointer];
+            fixed (byte* ptr = _buffer)
+            {
+                return (sbyte)*(ptr + pointer);
+            }
         }
 
-        public short ReadInt16()
+        public unsafe short ReadInt16()
         {
             var pointer = Advance(2);
-            return (short)(_buffer[pointer] | 
-                           (_buffer[pointer + 1] << 8));
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return (short)(readPtr[0] | (readPtr[1] << 8));
+#else
+                var shortPtr = (short*)ptr + pointer;
+                return *shortPtr;
+#endif
+            }
         }
         
-        public ushort ReadUInt16()
+        public unsafe ushort ReadUInt16()
         {
             var pointer = Advance(2);
-            return (ushort)(_buffer[pointer] |
-                            (_buffer[pointer + 1] << 8));
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return (ushort)(readPtr[0] | (readPtr[1] << 8));
+#else
+                var ushortPtr = (ushort*)(ptr + pointer);
+                return *ushortPtr;
+#endif
+            }
         }
         
-        public int ReadInt32()
+        public unsafe int ReadInt32()
         {
             var pointer = Advance(4);
-            return _buffer[pointer] | 
-                   (_buffer[pointer + 1] << 8) |
-                   (_buffer[pointer + 2] << 16) |
-                   (_buffer[pointer + 3] << 24);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return readPtr[0] | (readPtr[1] << 8) | (readPtr[2] << 16) | (readPtr[3] << 24);
+#else
+                var intPtr = (int*)(ptr + pointer);
+                return *intPtr;
+#endif
+            }
         }
         
-        public uint ReadUInt32()
+        public unsafe uint ReadUInt32()
         {
             var pointer = Advance(4);
-            return (uint)(_buffer[pointer] |
-                          (_buffer[pointer + 1] << 8) | 
-                          (_buffer[pointer + 2] << 16) |
-                          (_buffer[pointer + 3] << 24));
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return (uint)(readPtr[0] | (readPtr[1] << 8) | (readPtr[2] << 16) | (readPtr[3] << 24));
+#else
+                var uintPtr = (uint*)(ptr + pointer);
+                return *uintPtr;
+#endif
+            }
         }
 
-        public long ReadInt64()
+        public unsafe long ReadInt64()
         {
             var pointer = Advance(8);
-            return (long)_buffer[pointer] | 
-                   ((long)_buffer[pointer + 1] << 8) | 
-                   ((long)_buffer[pointer + 2] << 16) | 
-                   ((long)_buffer[pointer + 3] << 24) |
-                   ((long)_buffer[pointer + 4] << 32) | 
-                   ((long)_buffer[pointer + 5] << 40) |
-                   ((long)_buffer[pointer + 6] << 48) | 
-                   ((long)_buffer[pointer + 7] << 56);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return (long)readPtr[0] | ((long)readPtr[1] << 8) | ((long)readPtr[2] << 16) | 
+                       ((long)readPtr[3] << 24) | ((long)readPtr[4] << 32) | ((long)readPtr[5] << 40) |
+                       ((long)readPtr[6] << 48) | ((long)readPtr[7] << 56);
+#else
+                var longPtr = (long*)(ptr + pointer);
+                return *longPtr;
+#endif
+            }
         }
 
-        public ulong ReadUInt64()
+        public unsafe ulong ReadUInt64()
         {
             var pointer = Advance(8);
-            return (ulong)_buffer[pointer] | 
-                   ((ulong)_buffer[pointer + 1] << 8) |
-                   ((ulong)_buffer[pointer + 2] << 16) | 
-                   ((ulong)_buffer[pointer + 3] << 24) |
-                   ((ulong)_buffer[pointer + 4] << 32) |
-                   ((ulong)_buffer[pointer + 5] << 40) |
-                   ((ulong)_buffer[pointer + 6] << 48) |
-                   ((ulong)_buffer[pointer + 7] << 56);
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                return (ulong)readPtr[0] | ((ulong)readPtr[1] << 8) | ((ulong)readPtr[2] << 16) |
+                       ((ulong)readPtr[3] << 24) | ((ulong)readPtr[4] << 32) | ((ulong)readPtr[5] << 40) |
+                       ((ulong)readPtr[6] << 48) | ((ulong)readPtr[7] << 56);
+#else
+                var ulongPtr = (ulong*)(ptr + pointer);
+                return *ulongPtr;
+#endif
+            }
         }
 
         public unsafe float ReadSingle()
         {
             var pointer = Advance(4);
-            var num = (uint)(_buffer[pointer] |
-                          (_buffer[pointer + 1] << 8) | 
-                          (_buffer[pointer + 2] << 16) |
-                          (_buffer[pointer + 3] << 24));
-            return *(float*)&num;
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                var num = (uint)(readPtr[0] | (readPtr[1] << 8) | (readPtr[2] << 16) | (readPtr[3] << 24));
+                return *(float*)&num;
+#else
+                var floatPtr = (float*)(ptr + pointer);
+                return *floatPtr;
+#endif
+            }
         }
         
         public unsafe double ReadDouble()
         {
             var pointer = Advance(8);
-            var num = (ulong)_buffer[pointer] |
-                             ((ulong)_buffer[pointer + 1] << 8) |
-                             ((ulong)_buffer[pointer + 2] << 16) |
-                             ((ulong)_buffer[pointer + 3] << 24) |
-                             ((ulong)_buffer[pointer + 4] << 32) |
-                             ((ulong)_buffer[pointer + 5] << 40) |
-                             ((ulong)_buffer[pointer + 6] << 48) |
-                             ((ulong)_buffer[pointer + 7] << 56);
-            return *(double*)&num;
+            fixed (byte* ptr = _buffer)
+            {
+#if BIG_ENDIAN
+                var readPtr = ptr + pointer;
+                var num = (ulong)(readPtr[0] | ((ulong)readPtr[1] << 8) | ((ulong)readPtr[2] << 16) |
+                                 ((ulong)readPtr[3] << 24) | ((ulong)readPtr[4] << 32) | ((ulong)readPtr[5] << 40) |
+                                 ((ulong)readPtr[6] << 48) | ((ulong)readPtr[7] << 56));
+                return *(double*)&num;
+#else
+                var doublePtr = (double*)(ptr + pointer);
+                return *doublePtr;
+#endif
+            }
         }
 
-        public void ReadString(out string value)
+        public unsafe string ReadString()
         {
-            var length = ReadUInt16();
+            var length = ReadInt32();
             var pointer = Advance(length);
-            value = System.Text.Encoding.UTF8.GetString(_buffer, pointer, length);
+            fixed (byte* ptr = _buffer)
+            {
+                return System.Text.Encoding.UTF8.GetString(ptr + pointer, length);
+            }
         }
 
-        public void ReadByteArray(out byte[] value)
+        public unsafe byte[] ReadByteArray()
         {
-            var length = (int)ReadDynamicUInt32();
+            var length = ReadInt32();
             var pointer = Advance(length);
-            value = new byte[length];
-            Buffer.BlockCopy(_buffer, pointer, value, 0, length);
+            byte[] value = new byte[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (byte* destPtr = value)
+            {
+                byte* src = srcPtr + pointer;
+                Buffer.MemoryCopy(src, destPtr, length, length);
+            }
+            return value;
         }
 
-        public void ReadSByteArray(out sbyte[] value)
+        public unsafe sbyte[] ReadSByteArray()
         {
-            var length = (int)ReadDynamicUInt32();
+            var length = ReadInt32();
             var pointer = Advance(length);
-            value = new sbyte[length];
-            for (var i = 0; i < length; i++)
+            sbyte[] value = new sbyte[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (sbyte* destPtr = value)
             {
-                value[i] = (sbyte)_buffer[pointer + i];
+                byte* src = srcPtr + pointer;
+                Buffer.MemoryCopy(src, destPtr, length, length);
             }
+            return value;
         }
         
-        public void ReadInt16Array(out short[] value)
+        public unsafe short[] ReadInt16Array()
         {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 2);
-            value = new short[length];
-            for (var i = 0; i < length; i++)
+            var length = ReadInt32();
+            var arrayLen = length << 1;
+            var pointer = Advance(arrayLen);
+            short[] value = new short[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (short* destPtr = value)
             {
-                var shortValue = (short)(_buffer[pointer + i * 2] |
-                                         _buffer[pointer + i * 2 + 1] << 8);
-                value[i] = shortValue;
-            }
-        }
-        
-        public void ReadUInt16Array(out ushort[] value)
-        { 
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 2);
-            value = new ushort[length];
-            for (var i = 0; i < length; i++)
-            {
-                var ushortValue = (ushort)(_buffer[pointer + i * 2] |
-                                           _buffer[pointer + i * 2 + 1] << 8);
-                value[i] = ushortValue;
-            }
-        }
-
-        public void ReadInt32Array(out int[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 4);
-            value = new int[length];
-            for (var i = 0; i < length; i++)
-            {
-                var intValue = _buffer[pointer + i * 4] | 
-                               _buffer[pointer + i * 4 + 1] << 8 |
-                               _buffer[pointer + i * 4 + 2] << 16 |
-                               _buffer[pointer + i * 4 + 3] << 24;
-                value[i] = intValue;
-            }
-        }
-        
-        public void ReadUInt32Array(out uint[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 4);
-            value = new uint[length];
-            for (var i = 0; i < length; i++)
-            {
-                var uintValue = (uint)(_buffer[pointer] |
-                                       (_buffer[pointer + 1] << 8) |
-                                       (_buffer[pointer + 2] << 16) |
-                                       (_buffer[pointer + 3] << 24));
-                value[i] = uintValue;
-            }
-        }
-
-        public void ReadInt64Array(out long[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 8);
-            value = new long[length];
-            for (var i = 0; i < length; i++)
-            {
-                var longValue = (long)_buffer[pointer] | 
-                                ((long)_buffer[pointer + 1] << 8) | 
-                                ((long)_buffer[pointer + 2] << 16) | 
-                                ((long)_buffer[pointer + 3] << 24) |
-                                ((long)_buffer[pointer + 4] << 32) | 
-                                ((long)_buffer[pointer + 5] << 40) |
-                                ((long)_buffer[pointer + 6] << 48) | 
-                                ((long)_buffer[pointer + 7] << 56);
-                value[i] = longValue;
-            }
-        }
-        
-        public void ReadUInt64Array(out ulong[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 8);
-            value = new ulong[length];
-            for (var i = 0; i < length; i++)
-            {
-                var ulongValue = (ulong)_buffer[pointer] |
-                              ((ulong)_buffer[pointer + 1] << 8) |
-                              ((ulong)_buffer[pointer + 2] << 16) |
-                              ((ulong)_buffer[pointer + 3] << 24) |
-                              ((ulong)_buffer[pointer + 4] << 32) |
-                              ((ulong)_buffer[pointer + 5] << 40) |
-                              ((ulong)_buffer[pointer + 6] << 48) |
-                              ((ulong)_buffer[pointer + 7] << 56);
-                value[i] = ulongValue;
-            }
-        }
-
-        public unsafe void ReadSingleArray(out float[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 4);
-            value = new float[length];
-            for (var i = 0; i < length; i++)
-            {
-                var uintValue = (uint)(_buffer[pointer] |
-                                       (_buffer[pointer + 1] << 8) |
-                                       (_buffer[pointer + 2] << 16) |
-                                       (_buffer[pointer + 3] << 24));
-                value[i] = *(float*)&uintValue;
-            }
-        }
-        
-        public unsafe void ReadDoubleArray(out double[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length * 8);
-            value = new double[length];
-            for (var i = 0; i < length; i++)
-            {
-                var ulongValue = (ulong)_buffer[pointer] |
-                                 ((ulong)_buffer[pointer + 1] << 8) |
-                                 ((ulong)_buffer[pointer + 2] << 16) |
-                                 ((ulong)_buffer[pointer + 3] << 24) |
-                                 ((ulong)_buffer[pointer + 4] << 32) |
-                                 ((ulong)_buffer[pointer + 5] << 40) |
-                                 ((ulong)_buffer[pointer + 6] << 48) |
-                                 ((ulong)_buffer[pointer + 7] << 56);
-                value[i] = *(double*)&ulongValue;
-            }
-        }
-
-        public void ReadBoolArray(out bool[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            var pointer = Advance(length / 8 + (length % 8 == 0 ? 0 : 1));
-            value = new bool[length];
-            byte b = 0;
-            for (int i = 0; i < length; i++)
-            {
-                if (i % 8 == 0)
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 2)
                 {
-                    b = _buffer[pointer + i / 8];
+                    destPtr[i >> 1] = (short)(src[i] | (src[i + 1] << 8));
                 }
-                value[i] = (b & (1 << (i % 8))) != 0;
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
             }
-        }
-
-        public void ReadStringArray(out string[] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new string[length];
-            for (int i = 0; i < length; i++)
-            {
-                ReadString(out value[i]);
-            }
-        }
-
-        public void ReadByteArrayArray(out byte[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new byte[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadByteArray(out value[i]);
-            }
-        }
-
-        public void ReadSByteArrayArray(out sbyte[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new sbyte[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadSByteArray(out value[i]);
-            }
+            return value;
         }
         
-        public void ReadInt16ArrayArray(out short[][] value)
+        public unsafe ushort[] ReadUInt16Array()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new short[length][];
-            for (int i = 0; i < length; i++)
+            var length = ReadInt32();
+            var arrayLen = length << 1;
+            var pointer = Advance(arrayLen);
+            ushort[] value = new ushort[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (ushort* destPtr = value)
             {
-                ReadInt16Array(out value[i]);
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 2)
+                {
+                    destPtr[i >> 1] = (ushort)(src[i] | (src[i + 1] << 8));
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
             }
-        }
-        
-        public void ReadUInt16ArrayArray(out ushort[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new ushort[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadUInt16Array(out value[i]);
-            }
-        }
-        
-        public void ReadInt32ArrayArray(out int[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new int[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadInt32Array(out value[i]);
-            }
+            return value;
         }
 
-        public void ReadUInt32ArrayArray(out uint[][] value)
+        public unsafe int[] ReadInt32Array()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new uint[length][];
-            for (int i = 0; i < length; i++)
+            var length = ReadInt32();
+            var arrayLen = length << 2;
+            var pointer = Advance(arrayLen);
+            int[] value = new int[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (int* destPtr = value)
             {
-                ReadUInt32Array(out value[i]);
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 4)
+                {
+                    destPtr[i >> 2] = src[i] | (src[i + 1] << 8) | (src[i + 2] << 16) | (src[i + 3] << 24);
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
             }
-        }
-        
-        public void ReadInt64ArrayArray(out long[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new long[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadInt64Array(out value[i]);
-            }
-        }
-        
-        public void ReadUInt64ArrayArray(out ulong[][] value)
-        {
-            var length = (int)ReadDynamicUInt32();
-            value = new ulong[length][];
-            for (int i = 0; i < length; i++)
-            {
-                ReadUInt64Array(out value[i]);
-            }
+            return value;
         }
 
-        public void ReadSingleArrayArray(out float[][] value)
+        public unsafe uint[] ReadUInt32Array()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new float[length][];
-            for (int i = 0; i < length; i++)
+            var length = ReadInt32();
+            var arrayLen = length << 2;
+            var pointer = Advance(arrayLen);
+            uint[] value = new uint[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (uint* destPtr = value)
             {
-                ReadSingleArray(out value[i]);
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 4)
+                {
+                    destPtr[i >> 2] = (uint)(src[i] | (src[i + 1] << 8) | (src[i + 2] << 16) | (src[i + 3] << 24));
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
             }
+            return value;
+        }
+
+        public unsafe long[] ReadInt64Array()
+        {
+            var length = ReadInt32();
+            var arrayLen = length << 3;
+            var pointer = Advance(arrayLen);
+            long[] value = new long[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (long* destPtr = value)
+            {
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 8)
+                {
+                    destPtr[i >> 3] = (long)src[i] | ((long)src[i + 1] << 8) | ((long)src[i + 2] << 16) | 
+                             ((long)src[i + 3] << 24) | ((long)src[i + 4] << 32) | ((long)src[i + 5] << 40) |
+                             ((long)src[i + 6] << 48) | ((long)src[i + 7] << 56);
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
+            }
+            return value;
+        }
+
+        public unsafe ulong[] ReadUInt64Array()
+        {
+            var length = ReadInt32();
+            var arrayLen = length << 3;
+            var pointer = Advance(arrayLen);
+            ulong[] value = new ulong[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (ulong* destPtr = value)
+            {
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 8)
+                {
+                    destPtr[i >> 3] = (ulong)src[i] | ((ulong)src[i + 1] << 8) | ((ulong)src[i + 2] << 16) |
+                             ((ulong)src[i + 3] << 24) | ((ulong)src[i + 4] << 32) | ((ulong)src[i + 5] << 40) |
+                             ((ulong)src[i + 6] << 48) | ((ulong)src[i + 7] << 56);
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
+            }
+            return value;
+        }
+
+        public unsafe float[] ReadSingleArray()
+        {
+            var length = ReadInt32();
+            var arrayLen = length << 2;
+            var pointer = Advance(arrayLen);
+            float[] value = new float[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (float* destPtr = value)
+            {
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 4)
+                {
+                    uint num = (uint)(src[i] | (src[i + 1] << 8) | (src[i + 2] << 16) | (src[i + 3] << 24));
+                    destPtr[i >> 2] = *(float*)&num;
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
+            }
+            return value;
         }
         
-        public void ReadDoubleArrayArray(out double[][] value)
+        public unsafe double[] ReadDoubleArray()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new double[length][];
-            for (int i = 0; i < length; i++)
+            var length = ReadInt32();
+            var arrayLen = length << 3;
+            var pointer = Advance(arrayLen);
+            double[] value = new double[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (double* destPtr = value)
             {
-                ReadDoubleArray(out value[i]);
+                byte* src = srcPtr + pointer;
+#if BIG_ENDIAN
+                for (int i = 0; i < arrayLen; i += 8)
+                {
+                    ulong num = (ulong)src[i] | ((ulong)src[i + 1] << 8) | ((ulong)src[i + 2] << 16) |
+                               ((ulong)src[i + 3] << 24) | ((ulong)src[i + 4] << 32) | ((ulong)src[i + 5] << 40) |
+                               ((ulong)src[i + 6] << 48) | ((ulong)src[i + 7] << 56);
+                    destPtr[i >> 3] = *(double*)&num;
+                }
+#else
+                Buffer.MemoryCopy(src, destPtr, arrayLen, arrayLen);
+#endif
             }
+            return value;
         }
 
-        public void ReadBoolArrayArray(out bool[][] value)
+        public unsafe bool[] ReadBoolArray()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new bool[length][];
-            for (int i = 0; i < length; i++)
+            var length = ReadInt32();
+            var pointer = Advance(length);
+            bool[] value = new bool[length];
+            fixed (byte* srcPtr = _buffer)
+            fixed (bool* destPtr = value)
             {
-                ReadBoolArray(out value[i]);
+                byte* src = srcPtr + pointer;
+                Buffer.MemoryCopy(src, destPtr, length, length);
             }
+            return value;
         }
 
-        public void ReadStringArrayArray(out string[][] value)
+        public string[] ReadStringArray()
         {
-            var length = (int)ReadDynamicUInt32();
-            value = new string[length][];
+            var length = ReadInt32();
+            string[] value = new string[length];
             for (int i = 0; i < length; i++)
             {
-                ReadStringArray(out value[i]);
+                value[i] = ReadString();
             }
+            return value;
+        }
+
+        public byte[][] ReadByteArrayArray()
+        {
+            var length = ReadInt32();
+            byte[][] value = new byte[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadByteArray();
+            }
+            return value;
+        }
+
+        public sbyte[][] ReadSByteArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new sbyte[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadSByteArray();
+            }
+            return value;
+        }
+        
+        public short[][] ReadInt16ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new short[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadInt16Array();
+            }
+
+            return value;
+        }
+        
+        public ushort[][] ReadUInt16ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new ushort[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadUInt16Array();
+            }
+            return value;
+        }
+        
+        public int[][] ReadInt32ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new int[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadInt32Array();
+            }
+            return value;
+        }
+
+        public uint[][] ReadUInt32ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new uint[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadUInt32Array();
+            }
+            return value;
+        }
+        
+        public long[][] ReadInt64ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new long[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadInt64Array();
+            }
+            return value;
+        }
+        
+        public ulong[][] ReadUInt64ArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new ulong[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadUInt64Array();
+            }
+            return value;
+        }
+
+        public float[][] ReadSingleArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new float[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadSingleArray();
+            }
+            return value;
+        }
+        
+        public double[][] ReadDoubleArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new double[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadDoubleArray();
+            }
+            return value;
+        }
+
+        public bool[][] ReadBoolArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new bool[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadBoolArray();
+            }
+            return value;
+        }
+
+        public string[][] ReadStringArrayArray()
+        {
+            var length = ReadInt32();
+            var value = new string[length][];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = ReadStringArray();
+            }
+            return value;
         }
     }
 }
